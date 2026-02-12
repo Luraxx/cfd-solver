@@ -5,6 +5,7 @@ import { SimProvider } from '@/context/SimulationContext';
 import Roadmap from '@/components/Roadmap';
 import LessonPage from '@/components/LessonPage';
 import FullSimulation from '@/components/FullSimulation';
+import QuizMode from '@/components/QuizMode';
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    Root page — three states:
@@ -13,7 +14,7 @@ import FullSimulation from '@/components/FullSimulation';
    3. FullSimulation (full FVM sandbox)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
-type View = { kind: 'map' } | { kind: 'lesson'; id: string } | { kind: 'fullsim'; returnTo: string | null };
+type View = { kind: 'map' } | { kind: 'lesson'; id: string } | { kind: 'fullsim'; returnTo: string | null } | { kind: 'quiz' };
 
 const STORAGE_KEY = 'cfd-lab-completed';
 
@@ -69,6 +70,15 @@ export default function Home() {
     );
   }
 
+  // ── Quiz trainer mode ────────────────────────────────────────
+  if (view.kind === 'quiz') {
+    return (
+      <div className="page-enter">
+        <QuizMode onBack={goToMap} />
+      </div>
+    );
+  }
+
   // ── Lesson mode ──────────────────────────────────────────────
   if (view.kind === 'lesson') {
     return (
@@ -88,7 +98,7 @@ export default function Home() {
   // ── Roadmap (landing) ────────────────────────────────────────
   return (
     <div className="page-enter">
-      <Roadmap onOpen={openLesson} completed={completed} onOpenFullSim={() => openFullSim(null)} />
+      <Roadmap onOpen={openLesson} completed={completed} onOpenFullSim={() => openFullSim(null)} onOpenQuiz={() => setView({ kind: 'quiz' })} />
     </div>
   );
 }

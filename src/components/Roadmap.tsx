@@ -17,6 +17,7 @@ interface Props {
   onOpen: (lessonId: string) => void;
   completed: Set<string>;
   onOpenFullSim: () => void;
+  onOpenQuiz: () => void;
 }
 
 // Accent colour palette per category index
@@ -31,7 +32,7 @@ const COLORS = [
   { bg: 'bg-pink-500/10',   border: 'border-pink-500/40',   text: 'text-pink-400',   dot: 'bg-pink-400',   glow: 'shadow-pink-500/20' },
 ];
 
-export default function Roadmap({ onOpen, completed, onOpenFullSim }: Props) {
+export default function Roadmap({ onOpen, completed, onOpenFullSim, onOpenQuiz }: Props) {
   const categories = curriculum.children ?? [];
   const allLessons = getAllLessons();
   const total = allLessons.filter(l => l.available).length;
@@ -81,13 +82,25 @@ export default function Roadmap({ onOpen, completed, onOpenFullSim }: Props) {
         ))}
 
         {/* Full simulation button at bottom */}
-        <div className="pl-16 pr-6 py-8">
+        <div className="pl-16 pr-6 py-4">
           <button
             onClick={onOpenFullSim}
             className="w-full py-3 rounded-lg border border-gray-700/60 bg-gray-900/60 hover:bg-gray-800/80 hover:border-gray-600 text-gray-400 hover:text-gray-200 transition-all duration-200 text-sm font-medium flex items-center justify-center gap-2"
           >
             <Icon name="chart-line" className="text-cyan-400" size={16} />
             Simulations-Labor
+            <span className="text-gray-600 text-xs">&rarr;</span>
+          </button>
+        </div>
+
+        {/* Quiz trainer button */}
+        <div className="pl-16 pr-6 pb-8">
+          <button
+            onClick={onOpenQuiz}
+            className="w-full py-3 rounded-lg border border-gray-700/60 bg-gray-900/60 hover:bg-gray-800/80 hover:border-gray-600 text-gray-400 hover:text-gray-200 transition-all duration-200 text-sm font-medium flex items-center justify-center gap-2"
+          >
+            <Icon name="help-circle" className="text-amber-400" size={16} />
+            Quiz-Trainer
             <span className="text-gray-600 text-xs">&rarr;</span>
           </button>
         </div>
