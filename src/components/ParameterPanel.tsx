@@ -4,6 +4,7 @@ import React from 'react';
 import { useSimulation, presets1D } from '@/context/SimulationContext';
 import type { SchemeName } from '@/solver';
 import type { InitialConditionType } from '@/solver';
+import Icon from '@/components/Icons';
 
 const schemes: { value: SchemeName; label: string }[] = [
   { value: 'UDS', label: 'UDS (Upwind)' },
@@ -28,9 +29,9 @@ export default function ParameterPanel() {
   };
 
   return (
-    <div className="flex flex-col gap-3 p-4 bg-gray-900 text-gray-100 rounded-lg overflow-y-auto text-sm">
-      <h2 className="text-lg font-bold text-cyan-400 border-b border-gray-700 pb-2">
-        ⚙ Parameter
+    <div className="flex flex-col gap-3 p-3 bg-gray-950 text-gray-100 overflow-y-auto text-sm">
+      <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-800 pb-2 flex items-center gap-1.5">
+        <Icon name="compass" className="text-cyan-500" size={13} /> Parameter
       </h2>
 
       {/* Presets */}
@@ -225,7 +226,7 @@ export default function ParameterPanel() {
         disabled={state.isRunning}
         onClick={runSimulation}
       >
-        {state.isRunning ? '⏳ Rechne...' : '▶ Berechnen & Abspielen'}
+        {state.isRunning ? 'Rechne...' : 'Berechnen & Abspielen'}
       </button>
 
       <p className="text-xs text-gray-600 text-center -mt-1">
@@ -233,8 +234,9 @@ export default function ParameterPanel() {
       </p>
 
       {state.diverged && (
-        <div className="bg-red-900/50 border border-red-500 rounded p-2 text-xs text-red-300">
-          ⚠ Simulation divergiert! Versuche kleinere CFL-Zahl oder mehr Zellen.
+        <div className="bg-red-900/30 border border-red-800/50 rounded p-2 text-xs text-red-300 flex items-start gap-1.5">
+          <Icon name="alert-triangle" className="text-red-400 shrink-0 mt-0.5" size={12} />
+          Simulation divergiert! Versuche kleinere CFL-Zahl oder mehr Zellen.
         </div>
       )}
     </div>

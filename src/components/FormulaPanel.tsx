@@ -3,6 +3,7 @@
 import React, { useEffect, useRef } from 'react';
 import katex from 'katex';
 import { useSimulation } from '@/context/SimulationContext';
+import Icon from '@/components/Icons';
 
 /** Render a KaTeX formula into a span */
 function Formula({ tex, display = false }: { tex: string; display?: boolean }) {
@@ -91,8 +92,8 @@ function useLearningSteps(): LearningStep[] {
               <p className="text-center mb-2">
                 <Formula tex="\phi_f = \frac{1}{2}(\phi_P + \phi_E)" display />
               </p>
-              <p className="text-xs text-yellow-400">
-                ⚠ 2. Ordnung genau, aber kann bei Pe &gt; 2 Oszillationen erzeugen!
+              <p className="text-xs text-yellow-400 flex items-start gap-1">
+                <Icon name="alert-triangle" size={11} className="mt-0.5 shrink-0" /> 2. Ordnung genau, aber kann bei Pe &gt; 2 Oszillationen erzeugen!
               </p>
             </div>
           )}
@@ -165,9 +166,9 @@ export default function FormulaPanel() {
   const currentStep = state.learningStep;
 
   return (
-    <div className="flex flex-col h-full bg-gray-900 rounded-lg overflow-hidden">
+    <div className="flex flex-col h-full bg-gray-950 rounded-lg overflow-hidden">
       <div className="flex items-center justify-between px-4 py-2 border-b border-gray-700">
-        <h2 className="text-sm font-bold text-cyan-400">📐 Formeln & Theorie</h2>
+        <h2 className="text-sm font-bold text-cyan-400 flex items-center gap-1.5"><Icon name="ruler" size={13} /> Formeln & Theorie</h2>
         <span className="text-xs text-gray-500">{currentStep + 1}/{steps.length}</span>
       </div>
 

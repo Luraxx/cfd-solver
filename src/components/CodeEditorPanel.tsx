@@ -3,6 +3,7 @@
 import React, { useState, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { useSimulation, editableBlocks, compileUserCode } from '@/context/SimulationContext';
+import Icon from '@/components/Icons';
 
 // Dynamic import for Monaco to avoid SSR issues
 const MonacoEditor = dynamic(() => import('@monaco-editor/react'), { ssr: false });
@@ -43,11 +44,11 @@ export default function CodeEditorPanel() {
   }, [activeBlock, dispatch]);
 
   return (
-    <div className="flex flex-col h-full bg-gray-900 rounded-lg overflow-hidden">
+    <div className="flex flex-col h-full bg-gray-950 rounded-lg overflow-hidden">
       {/* Header with block selector */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-gray-700 bg-gray-800/50">
         <div className="flex items-center gap-2">
-          <span className="text-cyan-400 text-sm font-bold">💻 Code</span>
+          <span className="text-cyan-400 text-sm font-bold flex items-center gap-1.5"><Icon name="hash" size={13} /> Code</span>
           <select
             className="bg-gray-700 border border-gray-600 rounded text-xs p-1 text-gray-200"
             value={activeBlock.id}

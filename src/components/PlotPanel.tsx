@@ -3,6 +3,7 @@
 import React, { useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { useSimulation } from '@/context/SimulationContext';
+import Icon from '@/components/Icons';
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
@@ -59,11 +60,15 @@ export default function PlotPanel() {
   const nSnapshots = history?.snapshots.length ?? 0;
 
   return (
-    <div className="flex flex-col h-full bg-gray-900 rounded-lg overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-2 border-b border-gray-700">
-        <h2 className="text-sm font-bold text-cyan-400">📊 φ(x) Profil</h2>
-        {diverged && (
-          <span className="text-xs text-red-400 font-bold animate-pulse">DIVERGIERT</span>
+<div className="flex flex-col h-full bg-gray-950 overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-2 border-b border-gray-800">
+          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+            <Icon name="chart-line" className="text-cyan-500" size={13} /> φ(x) Profil
+          </h2>
+          {diverged && (
+            <span className="text-xs text-red-400 font-bold animate-pulse flex items-center gap-1">
+              <Icon name="alert-triangle" size={11} /> DIVERGIERT
+            </span>
         )}
       </div>
 
@@ -74,9 +79,9 @@ export default function PlotPanel() {
             layout={{
               autosize: true,
               margin: { l: 50, r: 20, t: 10, b: 45 },
-              paper_bgcolor: '#111827',
-              plot_bgcolor: '#1f2937',
-              font: { color: '#d1d5db', size: 11 },
+                paper_bgcolor: 'transparent',
+                plot_bgcolor: '#0d1117',
+                font: { color: '#6b7280', size: 10 },
               xaxis: {
                 title: { text: 'x', font: { size: 12 } },
                 gridcolor: '#374151',
@@ -118,7 +123,7 @@ export default function PlotPanel() {
       </div>
 
       {/* Transport controls + timeline */}
-      <div className="px-4 py-2 border-t border-gray-700 space-y-2">
+      <div className="px-4 py-2 border-t border-gray-800 space-y-2">
         {/* Playback bar */}
         <div className="flex items-center gap-2">
           {/* Play/Pause button */}
@@ -132,7 +137,7 @@ export default function PlotPanel() {
             } disabled:opacity-50`}
             title={isPlaying ? 'Pause (Space)' : hasRun ? 'Play (Space)' : 'Start (Space)'}
           >
-            {isRunning ? '⏳' : isPlaying ? '⏸' : '▶'}
+              {isRunning ? '...' : isPlaying ? '⏸' : '▶'}
           </button>
 
           {/* Timeline slider */}

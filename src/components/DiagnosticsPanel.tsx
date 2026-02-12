@@ -4,6 +4,7 @@ import React, { useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { useSimulation } from '@/context/SimulationContext';
 import { l2Norm, lInfNorm, totalMass } from '@/solver';
+import Icon from '@/components/Icons';
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
@@ -53,9 +54,9 @@ export default function DiagnosticsPanel() {
   const massError = initialMass !== 0 ? Math.abs(finalMass - initialMass) / Math.abs(initialMass) * 100 : 0;
 
   return (
-    <div className="flex flex-col h-full bg-gray-900 rounded-lg overflow-hidden">
+    <div className="flex flex-col h-full bg-gray-950 rounded-lg overflow-hidden">
       <div className="px-4 py-2 border-b border-gray-700">
-        <h2 className="text-sm font-bold text-cyan-400">📈 Diagnostik</h2>
+        <h2 className="text-sm font-bold text-cyan-400 flex items-center gap-1.5"><Icon name="chart-line" size={13} /> Diagnostik</h2>
       </div>
 
       <div className="flex-1 overflow-y-auto p-3 space-y-3">
@@ -157,8 +158,8 @@ export default function DiagnosticsPanel() {
           </div>
           {(diagnosticData.minVals[diagnosticData.minVals.length - 1] < -0.01 ||
             diagnosticData.maxVals[diagnosticData.maxVals.length - 1] > 1.01) && (
-            <p className="text-yellow-400 mt-1">
-              ⚠ Unter-/Überschwinger erkannt! Das Schema ist nicht TVD/bounded.
+            <p className="text-yellow-400 mt-1 flex items-start gap-1">
+              <Icon name="alert-triangle" size={12} className="mt-0.5 shrink-0" /> Unter-/Überschwinger erkannt! Das Schema ist nicht TVD/bounded.
             </p>
           )}
         </div>

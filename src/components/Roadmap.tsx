@@ -87,8 +87,8 @@ export default function Roadmap({ onOpen, completed, onOpenFullSim }: Props) {
             className="w-full py-3 rounded-lg border border-gray-700/60 bg-gray-900/60 hover:bg-gray-800/80 hover:border-gray-600 text-gray-400 hover:text-gray-200 transition-all duration-200 text-sm font-medium flex items-center justify-center gap-2"
           >
             <Icon name="chart-line" className="text-cyan-400" size={16} />
-            Vollständige FVM-Simulation
-            <span className="text-gray-600 text-xs">→</span>
+            Simulations-Labor
+            <span className="text-gray-600 text-xs">&rarr;</span>
           </button>
         </div>
       </div>

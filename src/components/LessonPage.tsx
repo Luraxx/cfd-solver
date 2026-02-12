@@ -9,6 +9,7 @@ import type { SimMode } from '@/curriculum/curriculum';
 import SimSandbox from '@/components/SimSandbox';
 import QuizPanel from '@/components/QuizPanel';
 import Icon, { HighlightIcon } from '@/components/Icons';
+import NotationGlossary from '@/components/NotationGlossary';
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    LessonPage — Full-screen lesson experience.
@@ -150,16 +151,19 @@ export default function LessonPage({ lessonId, onBack, onNavigate, onComplete }:
           </div>
         </div>
 
-        {/* Center: Step dots */}
-        {totalSteps > 0 && (
-          <div className="absolute left-1/2 -translate-x-1/2 flex gap-1">
-            {content!.steps.map((_, i) => (
-              <div key={i} className={`w-1.5 h-1.5 rounded-full transition-colors duration-300 ${
-                i <= activeStep ? 'bg-cyan-400' : 'bg-gray-800'
-              }`} />
-            ))}
-          </div>
-        )}
+        {/* Center: Step dots + Notation glossary */}
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2">
+          {totalSteps > 0 && (
+            <div className="flex gap-1">
+              {content!.steps.map((_, i) => (
+                <div key={i} className={`w-1.5 h-1.5 rounded-full transition-colors duration-300 ${
+                  i <= activeStep ? 'bg-cyan-400' : 'bg-gray-800'
+                }`} />
+              ))}
+            </div>
+          )}
+          <NotationGlossary lessonId={lessonId} />
+        </div>
 
         {/* Right: View mode toggle (always visible) */}
         <div className="ml-auto flex items-center gap-0.5 bg-gray-900/80 rounded-lg p-0.5">

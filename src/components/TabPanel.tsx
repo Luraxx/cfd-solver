@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useSimulation } from '@/context/SimulationContext';
+import Icon from '@/components/Icons';
 
 // Tab panels
 import FormulaPanel from '@/components/FormulaPanel';
@@ -12,10 +13,10 @@ import DiagnosticsPanel from '@/components/DiagnosticsPanel';
 type TabId = 'formulas' | 'code' | 'stencil' | 'diagnostics';
 
 const tabs: { id: TabId; label: string; icon: string }[] = [
-  { id: 'formulas', label: 'Formeln', icon: '📐' },
-  { id: 'code', label: 'Code', icon: '💻' },
-  { id: 'stencil', label: 'Stencil', icon: '🔲' },
-  { id: 'diagnostics', label: 'Diagnostik', icon: '📈' },
+  { id: 'formulas', label: 'Formeln', icon: 'ruler' },
+  { id: 'code', label: 'Code', icon: 'hash' },
+  { id: 'stencil', label: 'Stencil', icon: 'grid-square' },
+  { id: 'diagnostics', label: 'Diagnostik', icon: 'chart-line' },
 ];
 
 export default function TabPanel() {
