@@ -232,7 +232,29 @@ function HeatSandbox() {
               layout={{ ...PLOT_LAYOUT_BASE, xaxis: { ...PLOT_LAYOUT_BASE.xaxis, title: { text: 'x' } }, yaxis: { ...PLOT_LAYOUT_BASE.yaxis, title: { text: 'T' }, range: [-0.1, 1.2] } } as Plotly.Layout}
               config={PLOT_CONFIG} useResizeHandler style={{ width: '100%', height: '100%' }} />
           ) : (
-            <PlaceholderMsg icon="flame" text="Space drücken oder Starten" />
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center space-y-4">
+                <svg width="220" height="120" viewBox="0 0 220 120" className="mx-auto">
+                  {/* Stab */}
+                  <rect x="20" y="45" width="180" height="30" rx="3" fill="none" stroke="#4b5563" strokeWidth="1.5" />
+                  {/* Temperaturverlauf — Sinuskurve */}
+                  <path d="M20,60 Q65,30 110,60 Q155,90 200,60" fill="none" stroke="#f59e0b" strokeWidth="2.5" strokeDasharray="5 3" />
+                  {/* T=0 links, T=0 rechts */}
+                  <text x="12" y="65" textAnchor="end" fill="#6b7280" fontSize="9">T=0</text>
+                  <text x="208" y="65" textAnchor="start" fill="#6b7280" fontSize="9">T=0</text>
+                  {/* Gitterpunkte */}
+                  {[20,50,80,110,140,170,200].map(cx => <circle key={cx} cx={cx} cy={60} r="2" fill="#f59e0b" opacity="0.6" />)}
+                  {/* Pfeile für Wärmefluss */}
+                  <text x="110" y="105" textAnchor="middle" fill="#6b7280" fontSize="9">← Wärmeleitung →</text>
+                  <text x="110" y="25" textAnchor="middle" fill="#f59e0b" fontSize="9">T₀ = sin(πx)</text>
+                </svg>
+                <div>
+                  <p className="text-xs text-gray-400 font-medium">1D Wärmeleitung (explizit)</p>
+                  <p className="text-[10px] text-gray-600 mt-1">Anfangsverteilung diffundiert über Zeit — Fourier-Zahl bestimmt Stabilität</p>
+                  <p className="text-[10px] text-gray-600 mt-1"><kbd className="px-1 py-0.5 bg-gray-800 rounded text-gray-400">Space</kbd> oder Starten</p>
+                </div>
+              </div>
+            </div>
           )}
         </div>
         {result && (
@@ -615,7 +637,31 @@ function FVMPlot() {
     return traces;
   }, [history, compareHistory, currentSnapshotIdx, grid, scheme, compareScheme]);
 
-  if (!plotData) return <PlaceholderMsg icon="bar-chart" text="Space drücken oder Starten" />;
+  if (!plotData) return (
+    <div className="flex items-center justify-center h-full">
+      <div className="text-center space-y-4">
+        <svg width="220" height="130" viewBox="0 0 220 130" className="mx-auto">
+          {/* Achse */}
+          <line x1="20" y1="100" x2="200" y2="100" stroke="#4b5563" strokeWidth="1" />
+          {/* Rechteckpuls IC */}
+          <path d="M20,100 L20,100 L70,100 L70,35 L130,35 L130,100 L200,100" fill="none" stroke="#06b6d4" strokeWidth="2.5" />
+          {/* Transportierte Welle (verschoben + verschmiert) */}
+          <path d="M20,100 Q95,100 105,55 Q115,35 130,35 Q145,35 155,55 Q165,100 200,100" fill="none" stroke="#f59e0b" strokeWidth="2" strokeDasharray="5 3" />
+          {/* Pfeil für Transportrichtung */}
+          <line x1="80" y1="20" x2="140" y2="20" stroke="#6b7280" strokeWidth="1.5" />
+          <polygon points="140,16 150,20 140,24" fill="#6b7280" />
+          <text x="110" y="15" textAnchor="middle" fill="#6b7280" fontSize="9">u · ∂φ/∂x</text>
+          <text x="75" y="50" textAnchor="end" fill="#06b6d4" fontSize="9">IC</text>
+          <text x="165" y="65" textAnchor="start" fill="#f59e0b" fontSize="9">t &gt; 0</text>
+        </svg>
+        <div>
+          <p className="text-xs text-gray-400 font-medium">Schema-Vergleich (Konvektion/Diffusion)</p>
+          <p className="text-[10px] text-gray-600 mt-1">Vergleiche UDS, CDS, TVD — numerische vs. physikalische Diffusion</p>
+          <p className="text-[10px] text-gray-600 mt-1"><kbd className="px-1 py-0.5 bg-gray-800 rounded text-gray-400">Space</kbd> oder Starten</p>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <>
@@ -809,7 +855,29 @@ function ScalarTransport2DSandbox() {
               style={{ width: '100%', height: '100%' }}
             />
           ) : (
-            <PlaceholderMsg icon="map" text="Space drücken oder Starten" />
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center space-y-4">
+                <svg width="180" height="180" viewBox="0 0 180 180" className="mx-auto">
+                  {/* Grid */}
+                  {[0,1,2,3,4,5,6].map(i => <line key={`v${i}`} x1={25+i*22} y1={20} x2={25+i*22} y2={152} stroke="#374151" strokeWidth="0.5" />)}
+                  {[0,1,2,3,4,5,6].map(j => <line key={`h${j}`} x1={25} y1={20+j*22} x2={157} y2={20+j*22} stroke="#374151" strokeWidth="0.5" />)}
+                  {/* Gausssche Hügel als Kreis */}
+                  <circle cx="60" cy="86" r="20" fill="none" stroke="#06b6d4" strokeWidth="2" />
+                  <circle cx="60" cy="86" r="10" fill="#06b6d4" opacity="0.15" />
+                  <circle cx="60" cy="86" r="3" fill="#06b6d4" opacity="0.5" />
+                  {/* Geschwindigkeits-Pfeil */}
+                  <line x1="60" y1="86" x2="120" y2="65" stroke="#f59e0b" strokeWidth="1.5" />
+                  <polygon points="120,60 125,68 117,67" fill="#f59e0b" />
+                  <text x="100" y="58" textAnchor="middle" fill="#f59e0b" fontSize="9">u⃗</text>
+                  <text x="60" y="120" textAnchor="middle" fill="#06b6d4" fontSize="9">φ₀ (Gauß)</text>
+                </svg>
+                <div>
+                  <p className="text-xs text-gray-400 font-medium">2D Skalartransport</p>
+                  <p className="text-[10px] text-gray-600 mt-1">Gauß-Hügel wird durch Geschwindigkeitsfeld transportiert</p>
+                  <p className="text-[10px] text-gray-600 mt-1"><kbd className="px-1 py-0.5 bg-gray-800 rounded text-gray-400">Space</kbd> oder Starten</p>
+                </div>
+              </div>
+            </div>
           )}
         </div>
         {snapshots && (
@@ -1114,15 +1182,60 @@ function CavitySandbox() {
               }] as Plotly.Data[]}
               layout={{
                 ...PLOT_LAYOUT_BASE,
-                xaxis: { ...PLOT_LAYOUT_BASE.xaxis, title: { text: 'x' }, scaleanchor: 'y' },
-                yaxis: { ...PLOT_LAYOUT_BASE.yaxis, title: { text: 'y' } },
+                xaxis: { ...PLOT_LAYOUT_BASE.xaxis, title: { text: 'x' }, scaleanchor: 'y', range: [-0.02, 1.02] },
+                yaxis: { ...PLOT_LAYOUT_BASE.yaxis, title: { text: 'y' }, range: [-0.02, 1.02] },
+                shapes: [
+                  // Cavity box border
+                  { type: 'rect', x0: 0, y0: 0, x1: 1, y1: 1, line: { color: '#9ca3af', width: 2 } },
+                  // Lid (top wall) — thicker, highlighted
+                  { type: 'line', x0: 0, y0: 1, x1: 1, y1: 1, line: { color: '#c084fc', width: 4 } },
+                ],
+                annotations: [
+                  // Lid arrow showing movement direction
+                  { x: 0.78, y: 1.04, ax: 0.22, ay: 1.04, xref: 'x', yref: 'y', axref: 'x', ayref: 'y',
+                    showarrow: true, arrowhead: 3, arrowsize: 1.2, arrowwidth: 2, arrowcolor: '#c084fc' },
+                  { x: 0.5, y: 1.07, xref: 'x', yref: 'y', text: `u_lid = 1`,
+                    showarrow: false, font: { size: 10, color: '#c084fc' } },
+                  // Wall labels
+                  { x: -0.04, y: 0.5, xref: 'x', yref: 'y', text: 'Wand',
+                    showarrow: false, font: { size: 9, color: '#6b7280' }, textangle: -90 },
+                  { x: 1.04, y: 0.5, xref: 'x', yref: 'y', text: 'Wand',
+                    showarrow: false, font: { size: 9, color: '#6b7280' }, textangle: 90 },
+                  { x: 0.5, y: -0.04, xref: 'x', yref: 'y', text: 'Wand (no-slip)',
+                    showarrow: false, font: { size: 9, color: '#6b7280' } },
+                ],
               } as Plotly.Layout}
               config={PLOT_CONFIG}
               useResizeHandler
               style={{ width: '100%', height: '100%' }}
             />
           ) : (
-            <PlaceholderMsg icon="spiral" text="Space drücken oder Starten" />
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center space-y-4">
+                {/* Mini diagram of the cavity setup */}
+                <svg width="180" height="180" viewBox="0 0 180 180" className="mx-auto">
+                  {/* Box */}
+                  <rect x="30" y="30" width="120" height="120" fill="none" stroke="#4b5563" strokeWidth="2" />
+                  {/* Lid — top wall highlighted */}
+                  <line x1="30" y1="30" x2="150" y2="30" stroke="#c084fc" strokeWidth="4" />
+                  {/* Lid arrow */}
+                  <line x1="55" y1="20" x2="125" y2="20" stroke="#c084fc" strokeWidth="2" />
+                  <polygon points="125,15 135,20 125,25" fill="#c084fc" />
+                  <text x="90" y="13" textAnchor="middle" fill="#c084fc" fontSize="10">u = 1</text>
+                  {/* No-slip labels */}
+                  <text x="90" y="168" textAnchor="middle" fill="#6b7280" fontSize="9">no-slip</text>
+                  <text x="17" y="93" textAnchor="middle" fill="#6b7280" fontSize="9" transform="rotate(-90,17,93)">no-slip</text>
+                  <text x="163" y="93" textAnchor="middle" fill="#6b7280" fontSize="9" transform="rotate(90,163,93)">no-slip</text>
+                  {/* Vortex hint */}
+                  <ellipse cx="95" cy="82" rx="30" ry="25" fill="none" stroke="#4b556366" strokeWidth="1" strokeDasharray="4 3" />
+                  <polygon points="65,79 65,72 72,79" fill="#4b556366" />
+                </svg>
+                <div>
+                  <p className="text-xs text-gray-400 font-medium">Lid-Driven Cavity</p>
+                  <p className="text-[10px] text-gray-600 mt-1">Drücke <kbd className="px-1 py-0.5 bg-gray-800 rounded text-[10px] text-gray-400">Space</kbd> oder klicke Starten</p>
+                </div>
+              </div>
+            </div>
           )}
         </div>
       </div>
@@ -1220,7 +1333,28 @@ function JacobiGSSandbox() {
             style={{ width: '100%', height: '100%' }}
           />
         ) : (
-          <PlaceholderMsg icon="repeat" text="Konvergenz vergleichen" />
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center space-y-4">
+              <svg width="200" height="130" viewBox="0 0 200 130" className="mx-auto">
+                {/* Achsen */}
+                <line x1="30" y1="110" x2="185" y2="110" stroke="#4b5563" strokeWidth="1" />
+                <line x1="30" y1="110" x2="30" y2="15" stroke="#4b5563" strokeWidth="1" />
+                {/* Jacobi — langsamer */}
+                <path d="M30,25 Q60,28 80,40 Q110,60 140,80 Q165,95 185,105" fill="none" stroke="#f59e0b" strokeWidth="2" />
+                {/* GS — schneller */}
+                <path d="M30,25 Q50,40 65,65 Q80,85 100,95 Q130,105 185,108" fill="none" stroke="#06b6d4" strokeWidth="2" />
+                <text x="185" y="95" textAnchor="end" fill="#f59e0b" fontSize="9">Jacobi</text>
+                <text x="135" y="100" textAnchor="end" fill="#06b6d4" fontSize="9">Gauß-Seidel</text>
+                <text x="107" y="125" textAnchor="middle" fill="#6b7280" fontSize="9">Iteration →</text>
+                <text x="20" y="65" textAnchor="middle" fill="#6b7280" fontSize="9" transform="rotate(-90,20,65)">||r||₂</text>
+              </svg>
+              <div>
+                <p className="text-xs text-gray-400 font-medium">Jacobi vs. Gauß-Seidel</p>
+                <p className="text-[10px] text-gray-600 mt-1">Konvergenzrate iterativer Löser für −u″ = f</p>
+                <p className="text-[10px] text-gray-600 mt-1"><kbd className="px-1 py-0.5 bg-gray-800 rounded text-gray-400">Space</kbd> oder Starten</p>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>
@@ -1347,7 +1481,31 @@ function SodTubeSandbox() {
             style={{ width: '100%', height: '100%' }}
           />
         ) : (
-          <PlaceholderMsg icon="explosion" text="Shock Tube starten" />
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center space-y-4">
+              <svg width="220" height="120" viewBox="0 0 220 120" className="mx-auto">
+                {/* Rohr */}
+                <rect x="15" y="35" width="190" height="50" rx="3" fill="none" stroke="#4b5563" strokeWidth="1.5" />
+                {/* Membran */}
+                <line x1="110" y1="35" x2="110" y2="85" stroke="#a78bfa" strokeWidth="2" strokeDasharray="4 2" />
+                <text x="110" y="30" textAnchor="middle" fill="#a78bfa" fontSize="8">Membran</text>
+                {/* Hochdruck links */}
+                <text x="60" y="55" textAnchor="middle" fill="#f59e0b" fontSize="11" fontWeight="bold">ρ_L, p_L</text>
+                <text x="60" y="70" textAnchor="middle" fill="#6b7280" fontSize="9">Hochdruck</text>
+                {/* Niederdruck rechts */}
+                <text x="160" y="55" textAnchor="middle" fill="#06b6d4" fontSize="11" fontWeight="bold">ρ_R, p_R</text>
+                <text x="160" y="70" textAnchor="middle" fill="#6b7280" fontSize="9">Niederdruck</text>
+                {/* Wellen nach Aufreißen */}
+                <text x="45" y="105" textAnchor="middle" fill="#6b7280" fontSize="8">← Expansion</text>
+                <text x="165" y="105" textAnchor="middle" fill="#6b7280" fontSize="8">Stoß →</text>
+              </svg>
+              <div>
+                <p className="text-xs text-gray-400 font-medium">Sod Shock Tube</p>
+                <p className="text-[10px] text-gray-600 mt-1">Riemann-Problem: Membran reißt → Stoßwelle + Kontaktfläche + Expansion</p>
+                <p className="text-[10px] text-gray-600 mt-1"><kbd className="px-1 py-0.5 bg-gray-800 rounded text-gray-400">Space</kbd> oder Starten</p>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>
@@ -1627,7 +1785,34 @@ function VOF1DSandbox() {
             style={{ width: '100%', height: '100%' }}
           />
         ) : (
-          <PlaceholderMsg icon="droplet" text="VOF-Advektion starten" />
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center space-y-4">
+              <svg width="220" height="100" viewBox="0 0 220 100" className="mx-auto">
+                {/* Kanal */}
+                <line x1="15" y1="25" x2="205" y2="25" stroke="#4b5563" strokeWidth="1" />
+                <line x1="15" y1="75" x2="205" y2="75" stroke="#4b5563" strokeWidth="1" />
+                {/* Phase 1 — Luft */}
+                <rect x="15" y="25" width="80" height="50" fill="#1e3a5f" opacity="0.3" />
+                <text x="55" y="55" textAnchor="middle" fill="#60a5fa" fontSize="10">α=0</text>
+                <text x="55" y="68" textAnchor="middle" fill="#6b7280" fontSize="8">Luft</text>
+                {/* Interface */}
+                <line x1="95" y1="25" x2="95" y2="75" stroke="#06b6d4" strokeWidth="2.5" />
+                {/* Phase 2 — Wasser */}
+                <rect x="95" y="25" width="80" height="50" fill="#06b6d4" opacity="0.15" />
+                <text x="135" y="55" textAnchor="middle" fill="#06b6d4" fontSize="10">α=1</text>
+                <text x="135" y="68" textAnchor="middle" fill="#6b7280" fontSize="8">Wasser</text>
+                {/* Transport-Pfeil */}
+                <line x1="60" y1="88" x2="150" y2="88" stroke="#6b7280" strokeWidth="1" />
+                <polygon points="150,85 157,88 150,91" fill="#6b7280" />
+                <text x="105" y="98" textAnchor="middle" fill="#6b7280" fontSize="8">u · ∂α/∂x (VOF)</text>
+              </svg>
+              <div>
+                <p className="text-xs text-gray-400 font-medium">VOF 1D Advektion</p>
+                <p className="text-[10px] text-gray-600 mt-1">Volume-of-Fluid: Phasengrenze wird durch Geschwindigkeitsfeld transportiert</p>
+                <p className="text-[10px] text-gray-600 mt-1"><kbd className="px-1 py-0.5 bg-gray-800 rounded text-gray-400">Space</kbd> oder Starten</p>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>
