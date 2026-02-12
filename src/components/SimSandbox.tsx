@@ -87,7 +87,7 @@ function Slider({ label, value, min, max, step, onChange, color = 'cyan', suffix
 function RunBtn({ onClick, hasResult }: { onClick: () => void; hasResult: boolean }) {
   return (
     <button onClick={onClick}
-      className="w-full py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg font-semibold text-xs transition-colors">
+      className="w-full py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg font-semibold text-xs transition-colors">
       {hasResult ? '↻ Neustart' : '▶ Starten'}
     </button>
   );
@@ -236,8 +236,8 @@ function HeatSandbox() {
   }, [result, pb.idx, N, dx]);
 
   return (
-    <div className="flex flex-row-reverse h-full min-h-0">
-      <aside className="w-48 shrink-0 border-l border-gray-800/50 overflow-y-auto p-3 space-y-3">
+    <div className="flex flex-col-reverse md:flex-row-reverse h-full min-h-0">
+      <aside className="w-full md:w-48 shrink-0 border-t md:border-t-0 md:border-l border-gray-800/50 overflow-y-auto p-3 space-y-3 max-h-[40vh] md:max-h-none">
         <div className="text-[11px] font-semibold text-amber-400 mb-1 flex items-center gap-1.5"><Icon name="flame" className="text-amber-400" size={13} /> FDM Wärmeleitung</div>
         <div>
           <span className="text-[10px] text-gray-500">IC</span>
@@ -341,8 +341,8 @@ function StencilExplorer() {
   const stencilY = stencilX.map(f);
 
   return (
-    <div className="flex flex-row-reverse h-full min-h-0">
-      <aside className="w-52 shrink-0 border-l border-gray-800/50 overflow-y-auto p-3 space-y-3">
+    <div className="flex flex-col-reverse md:flex-row-reverse h-full min-h-0">
+      <aside className="w-full md:w-52 shrink-0 border-t md:border-t-0 md:border-l border-gray-800/50 overflow-y-auto p-3 space-y-3 max-h-[40vh] md:max-h-none">
         <div className="text-[11px] font-semibold text-violet-400 mb-1 flex items-center gap-1.5"><Icon name="hexagon" className="text-violet-400" size={13} /> FD-Stencil Explorer</div>
         <div>
           <span className="text-[10px] text-gray-500">Stencil</span>
@@ -398,8 +398,8 @@ function ConvectionSandbox() {
   ];
 
   return (
-    <div className="flex flex-row-reverse h-full min-h-0">
-      <aside className="w-48 shrink-0 border-l border-gray-800/50 overflow-y-auto p-3 space-y-3">
+    <div className="flex flex-col-reverse md:flex-row-reverse h-full min-h-0">
+      <aside className="w-full md:w-48 shrink-0 border-t md:border-t-0 md:border-l border-gray-800/50 overflow-y-auto p-3 space-y-3 max-h-[40vh] md:max-h-none">
         <div className="text-[11px] font-semibold text-cyan-400 mb-1 flex items-center gap-1.5"><Icon name="arrow-right" className="text-cyan-400" size={13} /> 1D Konvektion (FVM)</div>
         <SelectField label="Schema" value={state.scheme} options={schemes.map(s => ({ v: s.v, l: s.l }))}
           onChange={v => dispatch({ type: 'SET_SCHEME', scheme: v as SchemeName })} />
@@ -433,8 +433,8 @@ function ConvDiffSandbox() {
   ];
 
   return (
-    <div className="flex flex-row-reverse h-full min-h-0">
-      <aside className="w-48 shrink-0 border-l border-gray-800/50 overflow-y-auto p-3 space-y-3">
+    <div className="flex flex-col-reverse md:flex-row-reverse h-full min-h-0">
+      <aside className="w-full md:w-48 shrink-0 border-t md:border-t-0 md:border-l border-gray-800/50 overflow-y-auto p-3 space-y-3 max-h-[40vh] md:max-h-none">
         <div className="text-[11px] font-semibold text-emerald-400 mb-1 flex items-center gap-1.5"><Icon name="refresh" className="text-emerald-400" size={13} /> Konvektion-Diffusion</div>
         <SelectField label="Schema" value={state.scheme} options={schemes.map(s => ({ v: s.v, l: s.l }))}
           onChange={v => dispatch({ type: 'SET_SCHEME', scheme: v as SchemeName })} />
@@ -471,8 +471,8 @@ function SchemeCompareSandbox() {
   ];
 
   return (
-    <div className="flex flex-row-reverse h-full min-h-0">
-      <aside className="w-48 shrink-0 border-l border-gray-800/50 overflow-y-auto p-3 space-y-3">
+    <div className="flex flex-col-reverse md:flex-row-reverse h-full min-h-0">
+      <aside className="w-full md:w-48 shrink-0 border-t md:border-t-0 md:border-l border-gray-800/50 overflow-y-auto p-3 space-y-3 max-h-[40vh] md:max-h-none">
         <div className="text-[11px] font-semibold text-sky-400 mb-1 flex items-center gap-1.5"><Icon name="bar-chart" className="text-sky-400" size={13} /> Schema-Vergleich</div>
         <SelectField label="Primär" value={state.scheme} options={all.map(s => ({ v: s.v, l: s.l }))}
           onChange={v => dispatch({ type: 'SET_SCHEME', scheme: v as SchemeName })} />
@@ -509,8 +509,8 @@ function CFLSandbox() {
   useEffect(() => { dispatch({ type: 'SET_PARAM', key: 'gamma', value: 0 }); }, [dispatch]);
 
   return (
-    <div className="flex flex-row-reverse h-full min-h-0">
-      <aside className="w-48 shrink-0 border-l border-gray-800/50 overflow-y-auto p-3 space-y-3">
+    <div className="flex flex-col-reverse md:flex-row-reverse h-full min-h-0">
+      <aside className="w-full md:w-48 shrink-0 border-t md:border-t-0 md:border-l border-gray-800/50 overflow-y-auto p-3 space-y-3 max-h-[40vh] md:max-h-none">
         <div className="text-[11px] font-semibold text-amber-400 mb-1 flex items-center gap-1.5"><Icon name="clock" className="text-amber-400" size={13} /> CFL-Bedingung</div>
         <BigNumber value={state.cfl.toFixed(2)} label="CFL = |u|·Δt/Δx" ok={state.cfl <= 1} />
         <Slider label="CFL" value={state.cfl} min={0.1} max={2.0} step={0.05} onChange={v => dispatch({ type: 'SET_PARAM', key: 'cfl', value: v })} color="amber" warn={state.cfl > 1} />
@@ -536,8 +536,8 @@ function PecletSandbox() {
   const { state, dispatch, runSimulation } = useSimulation();
 
   return (
-    <div className="flex flex-row-reverse h-full min-h-0">
-      <aside className="w-48 shrink-0 border-l border-gray-800/50 overflow-y-auto p-3 space-y-3">
+    <div className="flex flex-col-reverse md:flex-row-reverse h-full min-h-0">
+      <aside className="w-full md:w-48 shrink-0 border-t md:border-t-0 md:border-l border-gray-800/50 overflow-y-auto p-3 space-y-3 max-h-[40vh] md:max-h-none">
         <div className="text-[11px] font-semibold text-orange-400 mb-1 flex items-center gap-1.5"><Icon name="thermometer" className="text-orange-400" size={13} /> Peclet-Zahl</div>
         <BigNumber value={state.peclet === Infinity ? '∞' : state.peclet.toFixed(1)} label="Pe = |u|·Δx/Γ"
           ok={state.peclet < 2 || state.peclet === Infinity} />
@@ -809,8 +809,8 @@ function ScalarTransport2DSandbox() {
   }, [snapshots, pb.idx, Nx, Ny]);
 
   return (
-    <div className="flex flex-row-reverse h-full min-h-0">
-      <aside className="w-48 shrink-0 border-l border-gray-800/50 overflow-y-auto p-3 space-y-3">
+    <div className="flex flex-col-reverse md:flex-row-reverse h-full min-h-0">
+      <aside className="w-full md:w-48 shrink-0 border-t md:border-t-0 md:border-l border-gray-800/50 overflow-y-auto p-3 space-y-3 max-h-[40vh] md:max-h-none">
         <div className="text-[11px] font-semibold text-sky-400 mb-1 flex items-center gap-1.5">
           <Icon name="map" className="text-sky-400" size={13} /> 2D Skalartransport
         </div>
@@ -1130,8 +1130,8 @@ function CavitySandbox() {
   const useZmid = vizMode === 'vorticity' || vizMode === 'pressure';
 
   return (
-    <div className="flex flex-row-reverse h-full min-h-0">
-      <aside className="w-48 shrink-0 border-l border-gray-800/50 overflow-y-auto p-3 space-y-3">
+    <div className="flex flex-col-reverse md:flex-row-reverse h-full min-h-0">
+      <aside className="w-full md:w-48 shrink-0 border-t md:border-t-0 md:border-l border-gray-800/50 overflow-y-auto p-3 space-y-3 max-h-[40vh] md:max-h-none">
         <div className="text-[11px] font-semibold text-violet-400 mb-1 flex items-center gap-1.5">
           <Icon name="spiral" className="text-violet-400" size={13} /> Lid-Driven Cavity
         </div>
@@ -1302,8 +1302,8 @@ function JacobiGSSandbox() {
   const iterAxis = useMemo(() => result ? Array.from({ length: result.jacRes.length }, (_, i) => i + 1) : [], [result]);
 
   return (
-    <div className="flex flex-row-reverse h-full">
-      <aside className="w-52 shrink-0 border-l border-gray-800 p-3 flex flex-col gap-3 overflow-y-auto">
+    <div className="flex flex-col-reverse md:flex-row-reverse h-full">
+      <aside className="w-full md:w-52 shrink-0 border-t md:border-t-0 md:border-l border-gray-800 p-3 flex flex-col gap-3 overflow-y-auto max-h-[40vh] md:max-h-none">
         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Jacobi vs. Gauss-Seidel</h3>
         <Slider label="Gitterpunkte N" value={N} min={8} max={128} step={8} onChange={setN} />
         <Slider label="Max. Iterationen" value={maxIter} min={50} max={1000} step={50} onChange={setMaxIter} />
@@ -1523,8 +1523,8 @@ function SodTubeSandbox() {
   }, [snapshots, pb.idx, plotVar, xArr]);
 
   return (
-    <div className="flex flex-row-reverse h-full">
-      <aside className="w-52 shrink-0 border-l border-gray-800 p-3 flex flex-col gap-3 overflow-y-auto">
+    <div className="flex flex-col-reverse md:flex-row-reverse h-full">
+      <aside className="w-full md:w-52 shrink-0 border-t md:border-t-0 md:border-l border-gray-800 p-3 flex flex-col gap-3 overflow-y-auto max-h-[40vh] md:max-h-none">
         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Sod Shock Tube</h3>
         <Slider label="Zellen N" value={Ncells} min={50} max={500} step={50} onChange={setNcells} />
         <Slider label="t_end" value={tEnd} min={0.05} max={0.4} step={0.05} onChange={setTEnd} suffix="s" />
@@ -1629,8 +1629,8 @@ function NormalShockSandbox() {
   const TArr = useMemo(() => MaRange.map((_, i) => pArr[i] / rhoArr[i]), [MaRange, pArr, rhoArr]);
 
   return (
-    <div className="flex flex-row-reverse h-full">
-      <aside className="w-56 shrink-0 border-l border-gray-800 p-3 flex flex-col gap-3 overflow-y-auto">
+    <div className="flex flex-col-reverse md:flex-row-reverse h-full">
+      <aside className="w-full md:w-56 shrink-0 border-t md:border-t-0 md:border-l border-gray-800 p-3 flex flex-col gap-3 overflow-y-auto max-h-[40vh] md:max-h-none">
         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Normalschock</h3>
         <Slider label="Mach-Zahl Ma₁" value={Ma1} min={1.0} max={6.0} step={0.1} onChange={setMa1} color="amber" />
         <div className="space-y-1.5 text-[11px]">
@@ -1700,8 +1700,8 @@ function EnergySpectrumSandbox() {
   }, [ReL, filterCut]);
 
   return (
-    <div className="flex flex-row-reverse h-full">
-      <aside className="w-52 shrink-0 border-l border-gray-800 p-3 flex flex-col gap-3 overflow-y-auto">
+    <div className="flex flex-col-reverse md:flex-row-reverse h-full">
+      <aside className="w-full md:w-52 shrink-0 border-t md:border-t-0 md:border-l border-gray-800 p-3 flex flex-col gap-3 overflow-y-auto max-h-[40vh] md:max-h-none">
         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Energiespektrum E(k)</h3>
         <div>
           <span className="text-[11px] text-gray-500">Re_L</span>
@@ -1768,8 +1768,8 @@ function ChannelLogLawSandbox() {
   }, [ReTau, kappa, B]);
 
   return (
-    <div className="flex flex-row-reverse h-full">
-      <aside className="w-52 shrink-0 border-l border-gray-800 p-3 flex flex-col gap-3 overflow-y-auto">
+    <div className="flex flex-col-reverse md:flex-row-reverse h-full">
+      <aside className="w-full md:w-52 shrink-0 border-t md:border-t-0 md:border-l border-gray-800 p-3 flex flex-col gap-3 overflow-y-auto max-h-[40vh] md:max-h-none">
         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Wandprofil u⁺(y⁺)</h3>
         <Slider label="Re_τ" value={ReTau} min={100} max={5000} step={100} onChange={setReTau} color="cyan" />
         <div className="text-[10px] text-gray-500 space-y-1 border-t border-gray-800 pt-2">
@@ -1899,8 +1899,8 @@ function VOF1DSandbox() {
   }, [snapshots, pb.idx, xArr, alpha0]);
 
   return (
-    <div className="flex flex-row-reverse h-full">
-      <aside className="w-52 shrink-0 border-l border-gray-800 p-3 flex flex-col gap-3 overflow-y-auto">
+    <div className="flex flex-col-reverse md:flex-row-reverse h-full">
+      <aside className="w-full md:w-52 shrink-0 border-t md:border-t-0 md:border-l border-gray-800 p-3 flex flex-col gap-3 overflow-y-auto max-h-[40vh] md:max-h-none">
         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">VOF 1D Advektion</h3>
         <Slider label="Zellen N" value={N} min={20} max={500} step={20} onChange={setN} />
         <Slider label="Zeitschritte" value={nSteps} min={50} max={1000} step={50} onChange={setNSteps} />

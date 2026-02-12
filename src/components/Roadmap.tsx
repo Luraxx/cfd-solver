@@ -40,14 +40,14 @@ export default function Roadmap({ onOpen, completed, onOpenFullSim, onOpenQuiz }
   const pct = total > 0 ? Math.round((done / total) * 100) : 0;
 
   return (
-    <div className="h-screen w-screen overflow-y-auto overflow-x-hidden bg-gray-950 roadmap-scroll">
+    <div className="h-dvh w-screen overflow-y-auto overflow-x-hidden bg-gray-950 roadmap-scroll">
       {/* ── subtle background dots ─────────────────────────── */}
       <div className="fixed inset-0 pointer-events-none opacity-[0.03]"
         style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
 
       {/* ── top area ───────────────────────────────────────── */}
-      <div className="relative z-10 max-w-3xl mx-auto pt-20 pb-6 px-6">
-        <h1 className="text-4xl font-bold tracking-tight text-white">
+      <div className="relative z-10 max-w-3xl mx-auto pt-12 sm:pt-20 pb-6 px-4 sm:px-6">
+        <h1 className="text-2xl sm:text-4xl font-bold tracking-tight text-white">
           CFD Lab
         </h1>
         <p className="mt-2 text-gray-500 text-sm leading-relaxed max-w-md">
@@ -68,7 +68,7 @@ export default function Roadmap({ onOpen, completed, onOpenFullSim, onOpenQuiz }
       {/* ── vertical path ──────────────────────────────────── */}
       <div className="relative z-10 max-w-3xl mx-auto pb-32">
         {/* trunk line */}
-        <div className="absolute left-[23px] top-0 bottom-0 w-px bg-gradient-to-b from-gray-800 via-gray-800 to-transparent ml-6" />
+        <div className="absolute left-[15px] sm:left-[23px] top-0 bottom-0 w-px bg-gradient-to-b from-gray-800 via-gray-800 to-transparent ml-6" />
 
         {categories.map((cat, ci) => (
           <StationBlock
@@ -82,7 +82,7 @@ export default function Roadmap({ onOpen, completed, onOpenFullSim, onOpenQuiz }
         ))}
 
         {/* Full simulation button at bottom */}
-        <div className="pl-16 pr-6 py-4">
+        <div className="pl-10 sm:pl-16 pr-4 sm:pr-6 py-4">
           <button
             onClick={onOpenFullSim}
             className="w-full py-3 rounded-lg border border-gray-700/60 bg-gray-900/60 hover:bg-gray-800/80 hover:border-gray-600 text-gray-400 hover:text-gray-200 transition-all duration-200 text-sm font-medium flex items-center justify-center gap-2"
@@ -94,7 +94,7 @@ export default function Roadmap({ onOpen, completed, onOpenFullSim, onOpenQuiz }
         </div>
 
         {/* Quiz trainer button */}
-        <div className="pl-16 pr-6 pb-8">
+        <div className="pl-10 sm:pl-16 pr-4 sm:pr-6 pb-8">
           <button
             onClick={onOpenQuiz}
             className="w-full py-3 rounded-lg border border-gray-700/60 bg-gray-900/60 hover:bg-gray-800/80 hover:border-gray-600 text-gray-400 hover:text-gray-200 transition-all duration-200 text-sm font-medium flex items-center justify-center gap-2"
@@ -125,9 +125,9 @@ function StationBlock({ cat, color, onOpen, completed, index }: StationProps) {
   const isLocked = !cat.available;
 
   return (
-    <div className={`relative pl-16 pr-6 py-6 ${isLocked ? 'opacity-40' : ''}`}>
+    <div className={`relative pl-10 sm:pl-16 pr-4 sm:pr-6 py-6 ${isLocked ? 'opacity-40' : ''}`}>
       {/* station dot on the trunk */}
-      <div className={`absolute left-[23px] ml-6 top-8 w-3 h-3 rounded-full ring-2 ring-gray-950 ${
+      <div className={`absolute left-[15px] sm:left-[23px] ml-6 top-8 w-3 h-3 rounded-full ring-2 ring-gray-950 ${
         isLocked ? 'bg-gray-700' : doneCount === lessons.length && lessons.length > 0 ? 'bg-emerald-400' : color.dot
       }`} />
 
@@ -179,7 +179,7 @@ function LessonCard({ lesson, color, isDone, onOpen }: CardProps) {
       disabled={!available}
       onClick={() => available && onOpen(lesson.id)}
       className={`
-        group relative text-left rounded-lg border px-3 py-2.5 w-full sm:w-[calc(50%-4px)]
+        group relative text-left rounded-lg border px-3 py-3 w-full sm:w-[calc(50%-4px)]
         transition-all duration-200 outline-none
         ${available
           ? `${color.bg} ${color.border} hover:shadow-lg hover:${color.glow} hover:scale-[1.02] active:scale-[0.98] cursor-pointer`

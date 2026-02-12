@@ -94,7 +94,7 @@ export default function QuizPanel({ lessonId, questions: directQuestions, title 
     const pct = Math.round((score / total) * 100);
     const great = pct >= 80;
     return (
-      <div className="flex items-center justify-center h-full px-6">
+      <div className="flex items-center justify-center h-full px-4 sm:px-6">
           <div className="max-w-md w-full text-center">
           <div className={`text-5xl font-bold mb-2 ${great ? 'text-emerald-400' : 'text-amber-400'}`}>{pct}%</div>
           <p className="text-sm text-gray-400 mb-1">{score} von {total} richtig</p>
@@ -102,7 +102,7 @@ export default function QuizPanel({ lessonId, questions: directQuestions, title 
             {great ? 'Sehr gut! Du hast das Thema verstanden.' : 'Lies die Theorie nochmal und versuche es erneut.'}
           </p>
           <button onClick={restart}
-            className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-medium rounded-lg transition-colors">
+            className="px-5 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-medium rounded-lg transition-colors">
             Nochmal versuchen
           </button>
         </div>
@@ -111,7 +111,7 @@ export default function QuizPanel({ lessonId, questions: directQuestions, title 
   }
 
   return (
-    <div className="flex items-start justify-center h-full px-6 py-10 overflow-y-auto">
+    <div className="flex items-start justify-center h-full px-4 sm:px-6 py-6 sm:py-10 overflow-y-auto">
       <div className="max-w-2xl w-full">
         {title && <h2 className="text-sm font-bold text-gray-300 mb-4">{title}</h2>}
 
@@ -168,12 +168,12 @@ export default function QuizPanel({ lessonId, questions: directQuestions, title 
         <div className="mt-5 flex justify-end">
           {!confirmed ? (
             <button onClick={handleConfirm} disabled={!canConfirm()}
-              className="px-4 py-1.5 bg-cyan-600 hover:bg-cyan-500 disabled:bg-gray-800 disabled:text-gray-600 text-white text-xs font-medium rounded-lg transition-colors">
+              className="px-4 py-2.5 bg-cyan-600 hover:bg-cyan-500 disabled:bg-gray-800 disabled:text-gray-600 text-white text-xs font-medium rounded-lg transition-colors">
               Überprüfen
             </button>
           ) : (
             <button onClick={handleNext}
-              className="px-4 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-medium rounded-lg transition-colors">
+              className="px-4 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-medium rounded-lg transition-colors">
               {currentIdx < total - 1 ? 'Nächste Frage' : 'Ergebnis anzeigen'}
             </button>
           )}
@@ -205,7 +205,7 @@ function SingleChoiceAnswers({ q, selected, confirmed, onSelect }: {
         }
         return (
           <button key={i} disabled={confirmed} onClick={() => onSelect(i)}
-            className={`w-full text-left px-3 py-2.5 rounded-lg border text-[12px] transition-colors flex items-start gap-2 ${style}`}>
+            className={`w-full text-left px-3 py-3 rounded-lg border text-[12px] transition-colors flex items-start gap-2 ${style}`}>
             <span className="text-gray-600 font-mono shrink-0 mt-px">{String.fromCharCode(65 + i)}.</span>
             <span className="flex-1"><QuizOptionText text={opt} /></span>
             {confirmed && isCorrect && <Icon name="check" size={14} className="text-emerald-400 shrink-0 mt-0.5" />}
@@ -237,7 +237,7 @@ function MultiSelectAnswers({ q, selected, confirmed, onToggle }: {
         }
         return (
           <button key={i} disabled={confirmed} onClick={() => onToggle(i)}
-            className={`w-full text-left px-3 py-2.5 rounded-lg border text-[12px] transition-colors flex items-start gap-2 ${style}`}>
+            className={`w-full text-left px-3 py-3 rounded-lg border text-[12px] transition-colors flex items-start gap-2 ${style}`}>
             <span className={`w-4 h-4 mt-0.5 shrink-0 rounded border flex items-center justify-center text-[10px] ${
               isSelected ? 'border-cyan-500 bg-cyan-900/40 text-cyan-300' : 'border-gray-700'
             }`}>{isSelected && '✓'}</span>
@@ -294,7 +294,7 @@ function TextInputAnswer({ q, value, confirmed, onChange, onSubmit }: {
           onChange={e => onChange(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter') onSubmit(); }}
           placeholder="Antwort eingeben…"
-          className={`w-full px-3 py-2.5 rounded-lg border text-[12px] bg-gray-900/60 outline-none transition-colors ${
+          className={`w-full px-3 py-3 rounded-lg border text-[12px] bg-gray-900/60 outline-none transition-colors ${
             confirmed ? correct ? 'border-emerald-500/60 text-emerald-300' : 'border-red-500/60 text-red-300'
               : 'border-gray-700 text-gray-300 focus:border-cyan-500/60'
           }`} />

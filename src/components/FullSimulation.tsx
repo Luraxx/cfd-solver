@@ -63,30 +63,30 @@ export default function FullSimulation({ onBack }: Props) {
   const groups = [...new Set(SIM_OPTIONS.map(o => o.group))];
 
   return (
-    <div className="h-screen w-screen bg-gray-950 flex flex-col overflow-hidden">
+    <div className="h-dvh w-screen bg-gray-950 flex flex-col overflow-hidden">
       {/* Header */}
       <header className="shrink-0 flex items-center h-10 px-3 border-b border-gray-800/60 bg-gray-950/80 backdrop-blur-sm z-20">
         <button onClick={onBack}
-          className="p-1.5 -ml-1 rounded hover:bg-gray-800 text-gray-500 hover:text-gray-300 transition-colors"
+          className="p-2 -ml-1 rounded hover:bg-gray-800 text-gray-500 hover:text-gray-300 transition-colors"
           title="Zurück">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="block">
             <path d="M10 3L5 8L10 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </button>
-        <span className="ml-2 text-[11px] text-gray-400 font-medium">Simulations-Labor</span>
+        <span className="ml-2 text-[11px] text-gray-400 font-medium hidden sm:inline">Simulations-Labor</span>
 
         {/* Active sim name */}
-        <div className="ml-4 flex items-center gap-1.5">
+        <div className="ml-2 sm:ml-4 flex items-center gap-1.5">
           <Icon name={activeOption.icon} className="text-cyan-400" size={14} />
           <span className="text-[11px] text-cyan-400 font-medium">{activeOption.label}</span>
         </div>
 
         <div className="ml-auto flex items-center gap-2">
           {activeMode === 'fvm-advanced' && (
-            <span className="text-[10px] text-gray-600">Space = Play/Pause</span>
+            <span className="text-[10px] text-gray-600 hidden sm:inline">Space = Play/Pause</span>
           )}
           <button onClick={() => setSidebarOpen(p => !p)}
-            className="p-1.5 rounded hover:bg-gray-800 text-gray-500 hover:text-gray-300 transition-colors"
+            className="p-2 rounded hover:bg-gray-800 text-gray-500 hover:text-gray-300 transition-colors"
             title={sidebarOpen ? 'Menü ausblenden' : 'Menü einblenden'}>
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
               <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
@@ -96,10 +96,10 @@ export default function FullSimulation({ onBack }: Props) {
       </header>
 
       {/* Main area */}
-      <div className="flex flex-1 min-h-0 overflow-hidden">
+      <div className="flex flex-col md:flex-row flex-1 min-h-0 overflow-hidden">
         {/* Left: Simulation picker sidebar */}
         {sidebarOpen && (
-          <aside className="w-52 shrink-0 border-r border-gray-800/50 overflow-y-auto bg-gray-950">
+          <aside className="w-full md:w-52 shrink-0 border-b md:border-b-0 md:border-r border-gray-800/50 overflow-y-auto bg-gray-950 max-h-[30vh] md:max-h-none">
             <div className="p-2 space-y-3">
               {groups.map(group => (
                 <div key={group}>
@@ -127,14 +127,14 @@ export default function FullSimulation({ onBack }: Props) {
         {/* Content area */}
         {activeMode === 'fvm-advanced' ? (
           /* Classic 3-column FVM layout */
-          <div className="flex flex-1 min-h-0 overflow-hidden">
-            <aside className="w-60 shrink-0 border-r border-gray-800/50 overflow-y-auto">
+          <div className="flex flex-col md:flex-row flex-1 min-h-0 overflow-hidden">
+            <aside className="w-full md:w-60 shrink-0 border-b md:border-b-0 md:border-r border-gray-800/50 overflow-y-auto max-h-[30vh] md:max-h-none">
               <ParameterPanel />
             </aside>
             <div className="flex-1 min-w-0 min-h-0 p-1">
               <PlotPanel />
             </div>
-            <aside className="w-[340px] shrink-0 border-l border-gray-800/50 min-h-0">
+            <aside className="hidden md:block w-[340px] shrink-0 border-l border-gray-800/50 min-h-0">
               <TabPanel />
             </aside>
           </div>

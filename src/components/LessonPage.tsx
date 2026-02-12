@@ -44,6 +44,21 @@ export default function LessonPage({ lessonId, onBack, onNavigate, onComplete }:
   // View mode: theory-only → split → (next lesson)
   const [viewMode, setViewMode] = useState<ViewMode>('theory');
 
+  // Detect mobile (< md breakpoint) — split view makes no sense on small screens
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mql = window.matchMedia('(max-width: 767px)');
+    setIsMobile(mql.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mql.addEventListener('change', handler);
+    return () => mql.removeEventListener('change', handler);
+  }, []);
+
+  // On mobile, redirect split → sim (split is desktop-only)
+  useEffect(() => {
+    if (isMobile && viewMode === 'split') setViewMode('sim');
+  }, [isMobile, viewMode]);
+
   // Reset view mode when lesson changes
   useEffect(() => { setViewMode('theory'); }, [lessonId]);
 
@@ -84,13 +99,13 @@ export default function LessonPage({ lessonId, onBack, onNavigate, onComplete }:
   // Primary action: what the big button does
   const handlePrimary = useCallback(() => {
     if (hasInteractive && viewMode === 'theory') {
-      // Show simulation
-      setViewMode('split');
+      // Show simulation — on mobile go straight to sim, on desktop use split
+      setViewMode(isMobile ? 'sim' : 'split');
     } else {
       // Go to next lesson
       if (next && next.available) onNavigate(next.id);
     }
-  }, [hasInteractive, viewMode, next, onNavigate]);
+  }, [hasInteractive, viewMode, isMobile, next, onNavigate]);
 
   // Spacebar logic
   useEffect(() => {
@@ -125,13 +140,13 @@ export default function LessonPage({ lessonId, onBack, onNavigate, onComplete }:
   const hasQuiz = !!(quizBank[lessonId]?.questions.length);
 
   return (
-    <div className="h-screen w-screen bg-gray-950 flex flex-col overflow-hidden">
+    <div className="h-dvh w-screen bg-gray-950 flex flex-col overflow-hidden">
       {/* ── Top bar ─────────────────────────────────────────── */}
-      <header className="shrink-0 flex items-center h-11 px-3 border-b border-gray-800/60 bg-gray-950/80 backdrop-blur-sm z-20">
+      <header className="shrink-0 flex items-center h-11 px-2 sm:px-3 border-b border-gray-800/60 bg-gray-950/80 backdrop-blur-sm z-20">
         {/* Left: Back + breadcrumb */}
         <div className="flex items-center min-w-0 shrink-0">
           <button onClick={onBack}
-            className="p-1.5 -ml-1 rounded hover:bg-gray-800 text-gray-500 hover:text-gray-300 transition-colors"
+            className="p-2 -ml-1 rounded hover:bg-gray-800 text-gray-500 hover:text-gray-300 transition-colors"
             title="Zurück zur Karte"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="block">
@@ -139,7 +154,7 @@ export default function LessonPage({ lessonId, onBack, onNavigate, onComplete }:
             </svg>
           </button>
 
-          <div className="flex items-center gap-1 ml-2 text-[11px] text-gray-500 min-w-0 overflow-hidden">
+          <div className="hidden sm:flex items-center gap-1 ml-2 text-[11px] text-gray-500 min-w-0 overflow-hidden">
             {crumbs.slice(1).map((c, i) => (
               <React.Fragment key={c.id}>
                 {i > 0 && <span className="text-gray-700 mx-0.5">/</span>}
@@ -152,7 +167,7 @@ export default function LessonPage({ lessonId, onBack, onNavigate, onComplete }:
         </div>
 
         {/* Center: Step dots + Notation glossary */}
-        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2">
+        <div className="hidden sm:flex absolute left-1/2 -translate-x-1/2 items-center gap-2">
           {totalSteps > 0 && (
             <div className="flex gap-1">
               {content!.steps.map((_, i) => (
@@ -172,7 +187,7 @@ export default function LessonPage({ lessonId, onBack, onNavigate, onComplete }:
           </ToggleBtn>
           {hasInteractive && (
             <>
-              <ToggleBtn active={viewMode === 'split'} onClick={() => setViewMode('split')} title="Split">
+              <ToggleBtn active={viewMode === 'split'} onClick={() => setViewMode('split')} title="Split" className="hidden md:flex">
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.2" fill="none"/><path d="M8 2v12" stroke="currentColor" strokeWidth="1.2"/></svg>
               </ToggleBtn>
               <ToggleBtn active={viewMode === 'sim'} onClick={() => setViewMode('sim')} title="Nur Simulation">
@@ -189,15 +204,15 @@ export default function LessonPage({ lessonId, onBack, onNavigate, onComplete }:
       </header>
 
       {/* ── Content area ────────────────────────────────────── */}
-      <div className="flex-1 flex min-h-0">
+      <div className="flex-1 flex flex-col md:flex-row min-h-0">
         {/* Theory panel */}
         {showTheory && (
           <div
             ref={theoryRef}
-            className={`overflow-y-auto py-10 px-8 transition-all duration-300 ${
+            className={`overflow-y-auto py-6 sm:py-10 px-4 sm:px-8 transition-all duration-300 ${
               theoryFullWidth
                 ? 'flex-1 max-w-4xl mx-auto'
-                : 'w-[520px] shrink-0 border-r border-gray-800/50'
+                : 'flex-1 md:flex-none md:w-[520px] md:shrink-0 border-b md:border-b-0 md:border-r border-gray-800/50 max-h-[50vh] md:max-h-none'
             }`}
           >
             {/* Title */}
@@ -243,7 +258,7 @@ export default function LessonPage({ lessonId, onBack, onNavigate, onComplete }:
       <div className="shrink-0 border-t border-gray-800/60 bg-gray-950/90 backdrop-blur-sm z-20">
         <div className="flex items-center justify-between px-4 py-2.5 max-w-5xl mx-auto">
           {/* Prev */}
-          <div className="w-40">
+          <div className="w-20 sm:w-40">
             {prev && prev.available ? (
               <button onClick={() => onNavigate(prev.id)}
                 className="flex items-center gap-1.5 text-[12px] text-gray-500 hover:text-gray-300 transition-colors group">
@@ -263,7 +278,7 @@ export default function LessonPage({ lessonId, onBack, onNavigate, onComplete }:
                 className="flex items-center gap-2 px-4 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-[12px] font-medium transition-colors">
                 <Icon name="play" className="text-white" size={12} />
                 Simulation starten
-                <kbd className="ml-1 text-[9px] bg-cyan-700/60 px-1 py-0.5 rounded text-cyan-200/80">Space</kbd>
+                <kbd className="ml-1 text-[9px] bg-cyan-700/60 px-1 py-0.5 rounded text-cyan-200/80 hidden sm:inline">Space</kbd>
               </button>
             ) : next && next.available ? (
               /* Next lesson button */
@@ -274,7 +289,7 @@ export default function LessonPage({ lessonId, onBack, onNavigate, onComplete }:
                   <path d="M6 3L11 8L6 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
                 {viewMode === 'theory' && !hasInteractive && (
-                  <kbd className="ml-1 text-[9px] bg-cyan-700/60 px-1 py-0.5 rounded text-cyan-200/80">Space</kbd>
+                  <kbd className="ml-1 text-[9px] bg-cyan-700/60 px-1 py-0.5 rounded text-cyan-200/80 hidden sm:inline">Space</kbd>
                 )}
               </button>
             ) : (
@@ -292,8 +307,8 @@ export default function LessonPage({ lessonId, onBack, onNavigate, onComplete }:
 
 /* ── Toggle button for view mode ─────────────────────────────── */
 
-function ToggleBtn({ active, onClick, title, children }: {
-  active: boolean; onClick: () => void; title: string; children: React.ReactNode;
+function ToggleBtn({ active, onClick, title, className = '', children }: {
+  active: boolean; onClick: () => void; title: string; className?: string; children: React.ReactNode;
 }) {
   return (
     <button
@@ -301,7 +316,7 @@ function ToggleBtn({ active, onClick, title, children }: {
       title={title}
       className={`p-1.5 rounded transition-colors ${
         active ? 'bg-gray-700 text-gray-200' : 'text-gray-600 hover:text-gray-400 hover:bg-gray-800/60'
-      }`}
+      } ${className}`}
     >
       {children}
     </button>

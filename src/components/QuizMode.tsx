@@ -109,7 +109,7 @@ export default function QuizMode({ onBack }: Props) {
       : undefined;
 
     return (
-      <div className="h-screen w-screen bg-gray-950 flex flex-col overflow-hidden">
+      <div className="h-dvh w-screen bg-gray-950 flex flex-col overflow-hidden">
         <header className="shrink-0 flex items-center h-11 px-3 border-b border-gray-800/60 bg-gray-950/80 backdrop-blur-sm z-20">
           <BackBtn onClick={() => { setSelectedTopic(null); setSelectedUnits(null); }} title="Zurück zur Themenwahl" />
           <span className="ml-2 text-xs text-gray-400 font-medium">{topic?.title ?? 'Quiz'}</span>
@@ -136,30 +136,30 @@ export default function QuizMode({ onBack }: Props) {
 
   // ── Topic picker ────────────────────────────────────────────
   return (
-    <div className="h-screen w-screen bg-gray-950 flex flex-col overflow-hidden">
+    <div className="h-dvh w-screen bg-gray-950 flex flex-col overflow-hidden">
       <header className="shrink-0 flex items-center h-11 px-3 border-b border-gray-800/60 bg-gray-950/80 backdrop-blur-sm z-20">
         <BackBtn onClick={onBack} title="Zurück zur Karte" />
         <span className="ml-2 text-xs font-bold text-gray-300 tracking-wide uppercase">Quiz-Trainer</span>
       </header>
 
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-3xl mx-auto px-6 py-10">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
           <h1 className="text-xl font-bold text-white mb-1">Quiz-Trainer</h1>
           <p className="text-xs text-gray-500 mb-8">Wähle ein Thema und teste dein Wissen. Fragen werden zufällig gemischt.</p>
 
           {/* Question count selector */}
-          <div className="flex items-center gap-3 mb-6">
+          <div className="flex items-center gap-3 mb-6 flex-wrap">
             <span className="text-[11px] text-gray-500">Anzahl Fragen:</span>
             {[10, 15, 20, 30].map(n => (
               <button key={n} onClick={() => setQuestionCount(n)}
-                className={`px-2.5 py-1 rounded text-[11px] font-medium transition-colors ${
+                className={`px-3 py-1.5 rounded text-[11px] font-medium transition-colors ${
                   questionCount === n ? 'bg-cyan-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
                 }`}>
                 {n}
               </button>
             ))}
             <button onClick={() => setQuestionCount(Infinity)}
-              className={`px-2.5 py-1 rounded text-[11px] font-medium transition-colors ${
+              className={`px-3 py-1.5 rounded text-[11px] font-medium transition-colors ${
                 questionCount === Infinity ? 'bg-cyan-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
               }`}>
               Alle
@@ -167,7 +167,7 @@ export default function QuizMode({ onBack }: Props) {
           </div>
 
           {/* Topic grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {QUIZ_TOPICS.map(topic => {
               const count = topicCounts[topic.id] ?? 0;
               const disabled = count === 0;
@@ -184,8 +184,8 @@ export default function QuizMode({ onBack }: Props) {
                     disabled
                       ? 'border-gray-800/40 opacity-40 cursor-not-allowed'
                       : 'border-gray-800 hover:border-cyan-600/40 hover:bg-gray-900/50'
-                  } ${topic.id === 'alle' ? 'col-span-2 lg:col-span-3 border-cyan-900/40 bg-cyan-950/20' : ''}
-                    ${topic.id === 'vorlesung' ? 'col-span-2 lg:col-span-3 border-amber-900/40 bg-amber-950/10' : ''}`}
+                  } ${topic.id === 'alle' ? 'sm:col-span-2 lg:col-span-3 border-cyan-900/40 bg-cyan-950/20' : ''}
+                    ${topic.id === 'vorlesung' ? 'sm:col-span-2 lg:col-span-3 border-amber-900/40 bg-amber-950/10' : ''}`}
                 >
                   <div className="flex items-start justify-between">
                     <div className="min-w-0">
