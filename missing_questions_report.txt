@@ -1,0 +1,1356 @@
+
+========== UNIT u04 ==========
+
+--- u04-q003 ---
+question: "Illustrieren Sie die Approximationen der expliziten und impliziten Eulerverfahren mit Hilfe von Tangenten in einem Funktionsgraph."
+blueprint: [
+  "Betrachte Graph φ(t). Die Zeitableitung ist die Steigung: dφ/dt = f(φ,t).",
+  "Explizit Euler: Tangente im Punkt (t^n, φ^n) mit Steigung f(φ^n,t^n); Projektion dieser Geraden bis t^{n+1} liefert φ^{n+1}.",
+  "Implizit Euler: Tangente im (unbekannten) Punkt (t^{n+1}, φ^{n+1}) mit Steigung f(φ^{n+1},t^{n+1}); φ^{n+1} ist so zu wählen, dass die Gerade von (t^n,φ^n) nach (t^{n+1},φ^{n+1}) diese Steigung konsistent erfüllt.",
+  "Anschaulich: explizit „läuft vorwärts“ mit alter Steigung; implizit „korrigiert“ mit neuer Steigung → mehr Dämpfung/Robustheit bei steifen Problemen."
+]
+mistakes: [
+  "Beide Tangenten am selben Punkt zeichnen (dann ist der Unterschied nicht sichtbar).",
+  "Tangente mit Sekante verwechseln (Euler benutzt Tangenten-/Rechteckregel).",
+  "Implizit als geometrisch „exakter“ interpretieren (stabiler, aber nicht automatisch genauer)."
+]
+
+--- u04-q007 ---
+question: "Was muss bei der Anwendung expliziter Verfahren berücksichtigt werden. Was ändert sich, wenn implizite Verfahren genutzt werden?"
+blueprint: [
+  "Explizit: Δt muss Stabilitätskriterien erfüllen (typisch CFL ≤ O(1), bei Diffusion Fo = αΔt/Δx² ≤ Grenzwert).",
+  "Explizit: kleine Δt nötig bei feinen Netzen, hohen Geschwindigkeiten oder starker Diffusion → viele Schritte, aber sehr einfache Updates.",
+  "Implizit: Stabilitätslimit ist stark erweitert (Diffusion oft unbedingte Stabilität), daher größere Δt möglich; dafür pro Schritt ein Gleichungssystem lösen (linear/nichtlinear).",
+  "Implizit: Zusätzlich zur Stabilität gilt weiterhin eine Genauigkeitsanforderung: zu großes Δt „verschmiert“ Transienten und erhöht Zeitdiskretisierungsfehler.",
+  "Praktisch: implizit erfordert Konvergenzkontrolle pro Zeitschritt (inner iterations), ggf. Under-Relaxation/Linearisierung."
+]
+mistakes: [
+  "Δt nur wegen Stabilität wählen (implizit) und Genauigkeit/Transientenauflösung ignorieren.",
+  "Inneren Solver nicht konvergieren lassen → Zeitschrittfehler dominiert oder Lösung driftet.",
+  "Explizit ohne CFL/ Fo-Kontrolle → Divergenz/Oszillation."
+]
+
+
+========== UNIT u05 ==========
+
+--- u05-q001 ---
+question: "Was bedeutet eine Diskretisierung für die Lösung einer gewöhnlichen Transport- gleichung?"
+blueprint: [
+  "Eine kontinuierliche Transportgleichung (PDE) wird auf ein endliches Gitter übertragen: Ort x → Stützstellen/Zellen, Ableitungen → Differenzen/Flüsse.",
+  "Unbekannte werden nur noch an diskreten Orten gespeichert (Knotenwerte) bzw. als Zellmittelwerte (FVM).",
+  "Die Differentialoperatoren werden durch Approximationen ersetzt (Stencil/Interpolationen) ⇒ aus der PDE entsteht ein algebraisches Gleichungssystem Aφ=b (stationär) bzw. ein ODE/DAE-System in der Zeit.",
+  "Diskretisierung bringt Trunkationsfehler O(Δx^p) (und ggf. O(Δt^q)); Lösung konvergiert gegen Kontinuumslösung für Δx,Δt→0 (bei konsistentem/stabilem Schema).",
+  "Wahl von Schema (z.B. Upwind/CDS/TVD), Ordnung, Gitterqualität und Randbehandlung entscheidet über Genauigkeit, Stabilität und Boundedness."
+]
+mistakes: [
+  "Schema/Gitter wählen ohne Pe/CFL/Monotonie zu prüfen → Oszillationen oder zu starke numerische Diffusion.",
+  "FDM- und FVM-Interpretation mischen (Knotenwert vs. Zellmittelwert) → falsche Flüsse/Gradienten.",
+  "Diskretisierungsfehler ignorieren (keine Gitterstudie) → nicht verifizierte Ergebnisse."
+]
+
+--- u05-q006 ---
+question: "Können Sie zentrale Differenzen (CDS), Rückwärts- (BDS) und Vorwärtsdifferenzen (FDS) mit Hilfe von Taylorreihenentwicklungen herleiten?"
+blueprint: [
+  "Taylor um xi: φ_{i+1}=φ_i + Δx φ′_i + (Δx²/2) φ″_i + (Δx³/6) φ‴_i + …",
+  "Taylor um xi: φ_{i−1}=φ_i − Δx φ′_i + (Δx²/2) φ″_i − (Δx³/6) φ‴_i + …",
+  "FDS: aus erster Reihe ⇒ φ′_i = (φ_{i+1}−φ_i)/Δx − (Δx/2)φ″_i + O(Δx²) ⇒ Ordnung p=1.",
+  "BDS: aus zweiter Reihe ⇒ φ′_i = (φ_i−φ_{i−1})/Δx − (Δx/2)φ″_i + O(Δx²) ⇒ p=1.",
+  "CDS: Subtraktion ⇒ φ_{i+1}−φ_{i−1}=2Δx φ′_i + (Δx³/3)φ‴_i + … ⇒ φ′_i=(φ_{i+1}−φ_{i−1})/(2Δx) − (Δx²/6)φ‴_i + O(Δx⁴) ⇒ p=2."
+]
+mistakes: [
+  "Terme falsch eliminieren (z.B. gerade/ungerade Terme verwechseln) → falsche Ordnung.",
+  "Δx-Schrittweiten falsch einsetzen (insb. bei nicht konstantem Δx).",
+  "Aus Taylor nur Formel hinschreiben ohne Trunkationsfehlerterm → Ordnung nicht begründet."
+]
+
+--- u05-q008 ---
+question: "Können Sie mit Hilfe einer Taylorreihenentwicklung die Konvergenzordnung zentraler Differenzenmethoden, von Vorwärtsdifferenzen und Rückwärtsdifferenzen herleiten?"
+blueprint: [
+  "Aus Taylor folgt für FDS: φ′_i = (φ_{i+1}−φ_i)/Δx − (Δx/2)φ″_i + O(Δx²) ⇒ leading error ∝ Δx ⇒ p=1.",
+  "Für BDS analog: φ′_i = (φ_i−φ_{i−1})/Δx − (Δx/2)φ″_i + O(Δx²) ⇒ p=1.",
+  "Für CDS: φ′_i = (φ_{i+1}−φ_{i−1})/(2Δx) − (Δx²/6)φ‴_i + O(Δx⁴) ⇒ leading error ∝ Δx² ⇒ p=2.",
+  "Interpretation: Symmetrie der CDS eliminiert den Δx-Term; unsymmetrische FDS/BDS behalten ihn."
+]
+mistakes: [
+  "Falscher Trunkationsfehlerterm (z.B. Δx² bei FDS behaupten).",
+  "Taylor zu früh abbrechen → leading term übersehen.",
+  "Auf nicht-äquidistanten Netzen die gleiche Ordnung annehmen ohne neue Herleitung."
+]
+
+--- u05-q010 ---
+question: "Wie lautet die Differenzenformel für die zweite Ableitung in y-Richtung auf einem äquidistanten kartesischen Netz in der x-y-Ebene??"
+blueprint: [
+  "Für ein äquidistantes 2D-Netz (Δy konstant) gilt zentral (2. Ordnung):",
+  "∂²φ/∂y² |_{i,j} ≈ (φ_{i,j+1} − 2φ_{i,j} + φ_{i,j−1}) / (Δy)².",
+  "Stencil: Nachbarn in y-Richtung (S,P,N) bei festem i."
+]
+mistakes: [
+  "Δy im Nenner vergessen oder Δx statt Δy verwenden.",
+  "j±1 falsch (Indexfehler).",
+  "Kreuzterme ∂²/∂x∂y fälschlich einbauen (hier nur reine y-Ableitung)."
+]
+
+--- u05-q018 ---
+question: "Wie können Approximationen für die zweiten Ableitungen hergeleitet werden (s auch vorhergehende Units)?"
+blueprint: [
+  "Taylorreihenansatz (klassisch): φ_{i±1} um xi entwickeln, addieren → φ″_i ≈ (φ_{i+1} − 2φ_i + φ_{i−1})/Δx² + O(Δx²).",
+  "Polynom-Fitting: Interpolationspolynom p_m(x) durch Stützstellen legen und zweimal ableiten ⇒ allgemeine Koeffizienten auch für nicht-äquidistante Netze.",
+  "Flux-Ansatz (FVM-Interpretation): Diffusionsterm ∂/∂x(Γ ∂φ/∂x) als Differenz von diffusen Flüssen an den Zellflächen: (Γ ∂φ/∂x)_e − (Γ ∂φ/∂x)_w über Δx.",
+  "Randnähe: einseitige/hybrid Stencils oder Geisterzellen einsetzen, damit BC korrekt eingehen."
+]
+mistakes: [
+  "Zweite Ableitung mit erster Ableitung verwechseln (z.B. (φ_{i+1}−φ_{i−1})/(2Δx) nutzen).",
+  "Randpunkte mit Innenformel behandeln ohne Geisterzellen/BC → Ordnung/Genauigkeit bricht ein.",
+  "Bei variablem Γ (Diffusivität) falsche Diskretisierung (z.B. Γ an falscher Stelle, kein harmonisches Mittel)."
+]
+
+
+========== UNIT u06 ==========
+
+--- u06-q002 ---
+question: "Können Sie die wesentlichen Schritte für die Herleitung der Impulserhaltungsgleichung skizzieren?"
+blueprint: [
+  "1) Kontrollvolumen wählen und Newton II anwenden: Änderungsrate des Impulses = Summe der Kräfte.",
+  "2) Reynolds-Transport-Theorem: d/dt ∫_V ρu dV + ∮_A ρu(u·n) dA = ΣF.",
+  "3) Kräfte aufteilen: Oberflächenkräfte = Druck (−p n) + viskose Spannungen (τ·n); Volumenkräfte = ρf.",
+  "4) Divergenzsatz auf Flüsse/Spannungen anwenden: ∮ (…)·n dA → ∫ ∇·(…) dV.",
+  "5) Differential (konservativ): ∂(ρu)/∂t + ∇·(ρu⊗u) = −∇p + ∇·τ + ρf.",
+  "6) Newton’sches Konstitutivgesetz ergänzen: τ = μ(∇u+∇uᵀ) − (2/3)μ(∇·u)I (Stokes-Hypothese)."
+]
+mistakes: [
+  "Druckkraft-Vorzeichen falsch (−∇p).",
+  "Konvektionsform u·∇u und ∇·(u⊗u) verwechseln (bei variabler Dichte nicht einfach austauschbar).",
+  "Viskosen Spannungstensor/Indizes falsch interpretieren."
+]
+
+--- u06-q006 ---
+question: "Was bedeuten die Indexes x und y in einer konventionellen Notation für die Schubspannung txy?"
+blueprint: [
+  "τ_ij: i = Richtung der Spannungs-/Kraftkomponente, j = Richtung der Flächennormalen, auf der sie wirkt.",
+  "τ_xy: x-Komponente der Traktion auf einer Fläche mit Normalenrichtung y (Schubspannung).",
+  "Entsteht durch Geschwindigkeitsgradienten quer zur Normalen, z.B. ∂u/∂y oder ∂v/∂x."
+]
+mistakes: [
+  "Indizes vertauschen bzw. falsche Ebene/Normale zuordnen.",
+  "Schub- mit Normalspannung verwechseln (τ_xx ist kein Schub).",
+  "Annahme τ_xy = τ_yx ohne Erklärung (für Newton’sche Fluide symmetrisch, aber Interpretation bleibt wichtig)."
+]
+
+--- u06-q008 ---
+question: "Definieren Sie die Schubspannung in x-Richtung, die an einer x-y-Ebene angreift."
+blueprint: [
+  "x–y-Ebene hat Normale in z-Richtung ⇒ gesuchte Komponente ist τ_xz (x-Komponente auf z-Fläche).",
+  "Für Newton’sches Fluid: τ_xz = μ(∂u/∂z + ∂w/∂x).",
+  "Analog: τ_yz = μ(∂v/∂z + ∂w/∂y) (y-Komponente auf z-Fläche)."
+]
+mistakes: [
+  "τ_xy statt τ_xz angeben (Ebene/Normale falsch interpretiert).",
+  "Nur einen Term nennen (symmetrischer Anteil fehlt).",
+  "Indices als „Ebene“ interpretieren statt als Kraft-/Normalenrichtung."
+]
+
+--- u06-q009 ---
+question: "Warum können alle quadratischen Terme der Taylorreihenentwicklung in der Herleitung der Navier-Stokes-Gleichungen vernachlässigt werden?"
+blueprint: [
+  "Bei der Herleitung wird ein infinitesimal kleines Kontrollvolumen betrachtet (Δ→0).",
+  "Flussgrößen an den Flächen werden per Taylor entwickelt: φ(x+Δx/2)=φ(x)+(Δx/2)φ_x + O(Δx²).",
+  "Beim Übergang zur Differentialform werden Flussdifferenzen durch Volumen geteilt; Terme O(Δx²) werden im Grenzprozess gegenüber den linearen O(Δx)-Beiträgen vernachlässigbar.",
+  "Deshalb bleiben nur Terme erster Ordnung (Ableitungen 1. Ordnung) übrig; höhere Ordnung bestimmt später den Trunkationsfehler der Diskretisierung."
+]
+mistakes: [
+  "Quadratische Terme aus „Physik“ streichen statt wegen Grenzübergang (Δ→0).",
+  "Grenzübergang nicht sauber erklären (warum verschwinden die Terme?).",
+  "Falsch schließen, dass in numerischen Diskretisierungen höhere Terme immer irrelevant seien."
+]
+
+--- u06-q011 ---
+question: "Können Sie die Herleitung für die differentielle Form der Energiegleichung skizzieren?"
+blueprint: [
+  "Start: 1. Hauptsatz/Energieerhaltung für Kontrollvolumen: Änderungsrate der Gesamtenergie = Wärmeleistung + mechanische Leistung (Druck/viskos) + Volumenkraftleistung.",
+  "Gesamtenergie pro Masse: E = e + (1/2)|u|² + gz; pro Volumen: ρE.",
+  "Reynolds-Transport-Theorem: d/dt ∫_V ρE dV + ∮_A ρE(u·n) dA = (Oberflächen-/Volumenleistungen).",
+  "Oberflächenbeiträge: Wärmeleitung −∮_A q·n dA (q=−k∇T); Druckarbeit −∮_A p(u·n) dA; viskose Arbeit ∮_A (τ·u)·n dA.",
+  "Volumenkräfte leisten Arbeit: ∫_V ρf·u dV; volumetrische Wärmequelle q̇_V möglich.",
+  "Divergenzsatz ⇒ differential (eine gebräuchliche Form): ∂(ρE)/∂t + ∇·(ρuE) = −∇·(pu) + ∇·(τ·u) − ∇·q + ρf·u + q̇_V.",
+  "Alternative (innere Energie): ρ De/Dt = −p∇·u + τ:∇u − ∇·q + q̇_V."
+]
+mistakes: [
+  "Druckarbeit und viskose Dissipation vermischen (−∇·(pu) vs. τ:∇u).",
+  "Wärmestrom-Vorzeichen falsch (q = −k∇T; in der PDE steht −∇·q).",
+  "Nicht klar zwischen E, e, h unterscheiden → falsche Terme."
+]
+
+--- u06-q012 ---
+question: "Welche Kräfte greifen in einem Strömungsprozess am Kontrollvolumen an? Wie beeinflussen Sie die Energiegleichung?"
+blueprint: [
+  "Oberflächenkräfte: Druckkräfte (−p n) und viskose Spannungen (τ·n) auf den Kontrollflächen.",
+  "Volumenkräfte: ρf (z.B. Gravitation, Rotation/Coriolis, elektromagnetisch).",
+  "Einfluss auf Energiegleichung als Leistung (Kraft·Geschwindigkeit):",
+  "  • Druckarbeit: −∇·(pu) bzw. −p∇·u (je nach Form).",
+  "  • Viskose Arbeit/Dissipation: ∇·(τ·u) und τ:∇u.",
+  "  • Volumenkräfte: ρf·u.",
+  "Wärmeübertrag (kein Kraftterm): −∇·q mit q=−k∇T; plus q̇_V als volumetrische Wärmequelle."
+]
+mistakes: [
+  "Wärmeleitung als „Kraft“ bezeichnen (ist ein Energiefluss).",
+  "Volumenkräfte vergessen (z.B. freie Konvektion: ρg).",
+  "Druckarbeit falsch als reine Quelle statt als Divergenz-/Arbeitsbegriff interpretieren."
+]
+
+--- u06-q013 ---
+question: "Können Sie die Energiegleichung herleiten für den Fall, dass die Energie als konservativer Skalar gegeben ist (beispielsweise Enthalpie h)?"
+blueprint: [
+  "Skalartransportform für Enthalpie h (konservativ): ∂(ρh)/∂t + ∇·(ρu h) = ∇·(Γ_h ∇h) + S_h.",
+  "Für konstantes c_p gilt h=c_p T ⇒ man kann äquivalent die Temperaturgleichung lösen: ρc_p DT/Dt = ∇·(k∇T) + Φ + q̇_V.",
+  "Zusammenhang Diffusion: Γ_h hängt von k und c_p ab (bei h=c_p T ist ∇h=c_p ∇T).",
+  "Kompressible Erweiterung (Skizze): ρ Dh/Dt = Dp/Dt + ∇·(k∇T) + Φ + … (Druckarbeit tritt auf).",
+  "S_h umfasst Quellen/Senken, z.B. volumetrische Heizung, viskose Dissipation Φ, Reaktionswärme."
+]
+mistakes: [
+  "h als „passiven Skalar“ behandeln und Druckarbeit/Dp/Dt in kompressiblen Fällen ignorieren.",
+  "Γ_h/Einheiten falsch (h-Form vs. T-Form).",
+  "Konservative und nicht-konservative Form mischen (bei variabler ρ)."
+]
+
+--- u06-q019 ---
+question: "Was ist der Einfluss molekularer Bewegung auf den Impuls in einer Strömung?"
+blueprint: [
+  "Molekulare Bewegung/Kollisionen bewirken Impulsaustausch zwischen benachbarten Fluidpaketen ⇒ Viskosität.",
+  "Makroskopisch entsteht ein viskoser Spannungstensor τ, der Geschwindigkeitsgradienten entgegenwirkt (glättet u-Profile).",
+  "Im Impulsgleichungssystem erscheint dies als diffusive Terme (∇·τ; bei konst. μ und inkompressibel: μ∇²u).",
+  "Folgen: Grenzschichten, Reibungsverluste, Dissipation (Umwandlung kinetischer in innere Energie)."
+]
+mistakes: [
+  "Viskosität als „zusätzliche Volumenkraft“ statt als Spannungs-/Diffusionsterm interpretieren.",
+  "Bei großen Re Viskosität überall vernachlässigen (Wandnähe bleibt entscheidend).",
+  "Dissipation/Impulsaustausch nur thermisch erklären, ohne Bezug zum Geschwindigkeitsgradienten."
+]
+
+--- u06-q021 ---
+question: "Welche mikroskopischen Prozesse verursachen Reibung und Diffusion?"
+blueprint: [
+  "Thermische Molekularbewegung und Kollisionen erzeugen Austausch von Impuls, Energie und Masse.",
+  "Impulsaustausch ⇒ Viskosität/Reibung (Schubspannungen).",
+  "Energieaustausch ⇒ Wärmeleitung (Fourier).",
+  "Stoffaustausch ⇒ molekulare Diffusion (Fick).",
+  "Irreversibilität/Entropieproduktion ist die thermodynamische Grundlage."
+]
+mistakes: [
+  "Turbulenz/Wirbel als mikroskopischen Prozess bezeichnen (das ist makroskopisch).",
+  "Konvektion mit Diffusion verwechseln.",
+  "Reibung nur als Wandphänomen sehen (auch im Volumen als viskose Dissipation)."
+]
+
+--- u06-q023 ---
+question: "Nenne Sie die Ursache für Diffusionsprozesse (Reibung, Wärmeleitung …) in einem Fluid."
+blueprint: [
+  "Molekulare Zufallsbewegung und Kollisionen führen zu Transport entlang von Gradienten.",
+  "Velocity-Gradient ⇒ Impulsdiffusion ⇒ Reibung (Viskosität).",
+  "Temperaturgradient ⇒ Energiediffusion ⇒ Wärmeleitung.",
+  "Konzentrationsgradient ⇒ Massendiffusion.",
+  "Thermodynamisch: irreversibler Prozess mit Entropieproduktion."
+]
+mistakes: [
+  "Diffusion ohne Gradienten erklären (Diffusion wird von Gradienten getrieben).",
+  "Turbulente Diffusion als Ursache molekularer Diffusion nennen.",
+  "Konvektion als Diffusion interpretieren."
+]
+
+--- u06-q024 ---
+question: "Nenne Sie zwei molekulare Transportprozesse in Gasen."
+blueprint: [
+  "Viskosität (Impulsübertrag) durch Molekülkollisionen.",
+  "Wärmeleitung (Energieübertrag) durch Molekülkollisionen.",
+  "Optional: Speziesdiffusion in Gasgemischen (Fick)."
+]
+mistakes: [
+  "Konvektion als molekularen Prozess nennen.",
+  "Turbulente Diffusion als molekular bezeichnen.",
+  "Nur Kennwerte nennen (k, μ), ohne Prozess zu erklären."
+]
+
+
+========== UNIT u07 ==========
+
+--- u07-q007 ---
+question: "Können Sie die Unterschiede zwischen 𝜅-Schemata und TVD Schemata nennen?"
+blueprint: [
+  "κ-Schemata: meist lineare Mischschemata zwischen Upwind und Central/Higher-Order, gesteuert über einen Parameter κ (konstante Gewichtung).",
+  "κ-Schemata können 2. Ordnung erreichen, garantieren aber i.d.R. keine Monotonie/Boundedness → können Overshoots/Undershoots erzeugen.",
+  "TVD-Schemata: nichtlineare Schemen mit Flux-Limiter ψ(r), die das Total-Variation-Diminishing-Kriterium erfüllen (keine neuen Extrema).",
+  "TVD ist 2. Ordnung in glatten Bereichen (ψ≈1) und fällt lokal auf 1. Ordnung zurück (ψ→0) nahe starker Gradienten/Schocks.",
+  "Praktisch: κ-Schemata einfacher, TVD robuster für scharfe Fronten."
+]
+mistakes: [
+  "TVD als „immer 2. Ordnung überall“ darstellen (nahe Gradienten degeneriert es).",
+  "κ als „Limiter“ missverstehen (κ ist typischerweise konstant, kein nichtlinearer Limiter).",
+  "Boundedness/Monotonie als unwichtig ansehen → unphysikalische Werte (negative Dichten, etc.)."
+]
+
+
+========== UNIT u08 ==========
+
+--- u08-q009 ---
+question: "Skizzieren Sie ein numerisches Netz um ein aerodynamisches Profil (in 2D)."
+blueprint: [
+  "Typisch ist ein O- oder C-Grid um das Profil: Gitterlinien folgen der Profilkontur, sodass nahe der Wand orthogonale Prismen/Quads entstehen.",
+  "Starke Verfeinerung in der Grenzschicht entlang der Profiloberfläche (kleines Δn, viele Lagen), moderate Streckung nach außen.",
+  "Wake-/Nachlaufverfeinerung hinter der Endkante (lange, feine Zellen entlang des Nachlaufs), besonders bei C-Grid.",
+  "Außenrand (Farfield) mit ausreichend Abstand (mehrere Profilsehnen) und gröberen Zellen."
+]
+mistakes: [
+  "Keine Nachlauf-/Wake-Verfeinerung → falscher Widerstand/Wirbelablösung.",
+  "Zellen nahe Wand stark schief/nicht orthogonal → schlechte Wandkräfte und Konvergenz.",
+  "Farfield zu nah → Rand beeinflusst Lösung (Reflexion/Blockage)."
+]
+
+--- u08-q010 ---
+question: "Welche Indices besitzen die Nachbarpunkte des Punktes (i,j,k) entlang der Gitterlinien eines strukturieren Gitters?"
+blueprint: [
+  "Entlang i-Richtung: (i−1,j,k) und (i+1,j,k).",
+  "Entlang j-Richtung: (i,j−1,k) und (i,j+1,k).",
+  "Entlang k-Richtung: (i,j,k−1) und (i,j,k+1).",
+  "Bei höherer Ordnung zusätzlich zweite Nachbarn: (i±2,j,k), (i,j±2,k), (i,j,k±2)."
+]
+mistakes: [
+  "Indizes vertauschen (z.B. i±1 als j-Nachbar).",
+  "Diagonale Nachbarn als „entlang der Gitterlinie“ zählen (das sind Ecken).",
+  "3D-Nachbarn vergessen (k±1)."
+]
+
+--- u08-q011 ---
+question: "Durch wie viele Indices wird ein Punkt in a. einem strukturierten und b. einem unstrukturierten räumlichen Netz beschrieben?"
+blueprint: [
+  "a) Strukturiert: in 3D durch drei Indizes (i,j,k) (in 2D: i,j). Nachbarn sind implizit über ±1 definiert.",
+  "b) Unstrukturiert: typischerweise durch einen globalen Index/ID (n); Nachbarschaften werden über Konnektivitätslisten (Element→Knoten, Zelle→Nachbar) gespeichert."
+]
+mistakes: [
+  "Unstrukturiert trotzdem mit (i,j,k) erklären (gibt es dort nicht als natürliche Ordnung).",
+  "Konnektivität ignorieren (bei unstrukturiert entscheidend).",
+  "Knoten- und Zellen-Index verwechseln (zwei verschiedene Mengen)."
+]
+
+--- u08-q012 ---
+question: "Was ist ein blockstrukturiertes Netz?"
+blueprint: [
+  "Ein blockstrukturiertes Netz besteht aus mehreren strukturierten Teilgittern (Blöcken), die an Blockgrenzen gekoppelt werden.",
+  "Jeder Block besitzt eine eigene (i,j,k)-Indexierung; an Interfaces werden Daten (Flüsse/Variablen) ausgetauscht.",
+  "Vorteil: komplexe Geometrien lassen sich abdecken, während innerhalb eines Blocks die strukturierten Vorteile bleiben (effiziente Speicherlayout, einfache Stencils).",
+  "Multi-Block kann konform (Knoten passen) oder non-konform (Hanging nodes, Interpolation an Interfaces) sein."
+]
+mistakes: [
+  "Blockstrukturiert mit unstrukturiert gleichsetzen.",
+  "Interface-Behandlung ignorieren (Konservativität/Interpolation an Blockgrenzen!).",
+  "Sehr viele kleine Blöcke ohne Not → Overhead und Fehlerquellen."
+]
+
+--- u08-q013 ---
+question: "Was ist der Unterschied zwischen einem strukturierten und einem unstrukturierten Netz?"
+blueprint: [
+  "Strukturiert: regelmäßige Konnektivität; Nachbarn über Index-Offsets (i±1,j±1,…) definiert; Gitterlinien/Topologie klar (Quads/Hexa typ.).",
+  "Unstrukturiert: beliebige Konnektivität; Elemente (Tri/Tet/Poly) über Listen gespeichert; Nachbarn müssen über Datenstruktur gesucht/gespeichert werden.",
+  "Strukturiert: sehr effizient (Speicher, Cache), einfache Stencils; schwieriger für sehr komplexe Geometrien.",
+  "Unstrukturiert: sehr flexibel (Geometrie, lokale Verfeinerung), aber höherer Overhead und oft höhere numerische Diffusion/geringere Effizienz."
+]
+mistakes: [
+  "Elementtyp mit Struktur verwechseln (es gibt auch strukturierte Dreiecks-Topologien bzw. unstrukturierte Quads).",
+  "Unstrukturiert als automatisch „genauer“ ansehen (ist meist nur flexibler).",
+  "Datenstruktur-/Solver-Overhead unterschätzen."
+]
+
+--- u08-q014 ---
+question: "Was sind die Vorteile eines unstrukturierten Netzes? Was sind die Nachteile?"
+blueprint: [
+  "Vorteile: sehr hohe Geometrieflexibilität (komplexe CAD), lokale Verfeinerung/Adaptivität einfach, automatische Netzerzeugung oft möglich.",
+  "Vorteile: einfache Einbindung von Hybrid-Elementen (Prismen an Wand + Tets im Volumen).",
+  "Nachteile: mehr Rechen-/Speicheraufwand (Konnektivität, schlechtere Cache-Lokalität), kompliziertere Implementierung.",
+  "Nachteile: oft höhere Skewness/Non-Orthogonalität → Genauigkeitsverlust, größere numerische Diffusion, stärkere Abhängigkeit von Korrekturen.",
+  "Nachteile: hohe Ordnung/saubere Grenzschichtauflösung kann schwieriger sein als mit gutem strukturiertem Grid."
+]
+mistakes: [
+  "Unstrukturiert als „immer besser“ verkaufen (Flexibilität ≠ Qualität).",
+  "Grenzschichtbedarf unterschätzen (Tets direkt an Wand ohne Prismenlagen).",
+  "Korrekturen für Non-Orthogonalität weglassen."
+]
+
+--- u08-q015 ---
+question: "Können Sie die Prinzipien einer Delaunay Triangulation nennen?"
+blueprint: [
+  "Delaunay-Triangulation erzeugt Dreiecke (2D), sodass der Umkreis jedes Dreiecks keine anderen Punkte im Inneren enthält (empty circumcircle property).",
+  "Sie maximiert den minimalen Winkel der Dreiecke (vermeidet „sliver“/sehr spitze Dreiecke soweit möglich).",
+  "Dualität: Dualgraph ist das Voronoi-Diagramm (Voronoi-Kanten stehen senkrecht auf Delaunay-Kanten).",
+  "Lokale Kanten-Flips (Edge flipping) können genutzt werden, um die Delaunay-Bedingung herzustellen."
+]
+mistakes: [
+  "Delaunay als Garantie für „perfekte“ Elemente interpretieren (Qualität hängt auch von Punktverteilung ab).",
+  "Umkreis-Kriterium falsch (nicht „kein Punkt auf dem Umkreis“, sondern „kein Punkt im Inneren“, Gleichheit ist degeneriert).",
+  "Voronoi und Delaunay verwechseln."
+]
+
+--- u08-q016 ---
+question: "Zeichnen Sie ein unstrukturiertes 2D-Netz mit 4 Elementen (Dreiecken). Nummerieren Sie alle Elemente und alle Knoten und geben Sie eine Abhängigkeitsmatrix an."
+blueprint: [
+  "Beispiel (Quadrat mit Mittelpunktknoten): Knoten 1–4 = Ecken, Knoten 5 = Zentrum.",
+  "Elemente (Dreiecke): e1=(1,2,5), e2=(2,3,5), e3=(3,4,5), e4=(4,1,5).",
+  "Abhängigkeits-/Konnektivitätsmatrix Element→Knoten (4×3):",
+  "  e1: [1, 2, 5]",
+  "  e2: [2, 3, 5]",
+  "  e3: [3, 4, 5]",
+  "  e4: [4, 1, 5]",
+  "Optional: Aus dieser Matrix kann man Nachbarschaften (Element↔Element) über gemeinsame Kanten ableiten."
+]
+mistakes: [
+  "Elementnummerierung ohne Knotenliste (Konnektivität fehlt).",
+  "Knoten- und Elementindizes mischen (unterschiedliche Mengen).",
+  "Orientierung der Dreiecke inkonsistent (kann für Normalen/Flüsse relevant werden)."
+]
+
+--- u08-q017 ---
+question: "Wie werden Flüsse über die Zellränder hinweg in einem unstrukturierten Gitter berechnet?"
+blueprint: [
+  "Wie in FVM allgemein: Integralbilanz pro Zelle; Summe der Flüsse über alle Zellflächen ergibt die Änderung/Quelle.",
+  "Für jede Face f: Normalenvektor n_f und Fläche A_f bestimmen; Massfluss ṁ_f=(ρu·n)_f A_f.",
+  "Face-Werte (φ_f, u_f, p_f) aus Rekonstruktion/Interpolation aus Nachbarzellen berechnen (z.B. linear mit Gradienten, least-squares, Limiter).",
+  "Konvektiver Fluss: F_conv,f = ṁ_f φ_f; diffusive Flüsse: F_diff,f = −Γ_f (∇φ·n)_f A_f.",
+  "Non-orthogonal correction: bei schiefen Flächen wird der diffusive Anteil in orthogonale + Korrektur zerlegt, um Genauigkeit zu erhalten."
+]
+mistakes: [
+  "Flächennormalen/Flächeninhalt falsch (Vorzeichen/Geometrie) → Verletzung der Erhaltung.",
+  "Keine Gradientenrekonstruktion (nur arithmetische Mittel) bei unstrukturiert → zu diffusive/ungenau.",
+  "Non-orthogonal correction weglassen auf schiefen Netzen → großer Fehler im Diffusionsterm."
+]
+
+--- u08-q018 ---
+question: "Wie beeinflusst ein Netz mit Verdichtungen an den Wänden die Konvergenzordnung der Diskretisierung?"
+blueprint: [
+  "Wandverdichtung (stark nicht-äquidistantes Netz) verändert die Fehlerkonstante und kann die beobachtete Ordnung beeinflussen.",
+  "Bei glatter Streckung und korrekt hergeleiteten Operatoren bleibt die formale Ordnung (z.B. 2. Ordnung) erhalten, aber die Kondition/Steifigkeit steigt.",
+  "Bei abrupten Zellgrößensprüngen kann die globale Konvergenzordnung sinken (lokale 1.-Ordnung-Fehler dominieren).",
+  "Positiv: Wandverdichtung verbessert Wandauflösung (y+, Schub/Heat Transfer) und kann lokale Größen stark genauer machen, auch wenn die globale Ordnung nicht steigt."
+]
+mistakes: [
+  "Gitterverdichtung automatisch als Ordnungserhöhung interpretieren (Ordnung ist Schemaeigenschaft).",
+  "Zu harte Streckung erzeugen (große Aspect Ratios/Skewness) → numerische Probleme und niedrigere beobachtete Ordnung.",
+  "Nur Wand verfeinern, aber Hauptfehler liegt im Außenfeld/Nachlauf (Konvergenz bleibt schlecht)."
+]
+
+
+========== UNIT u09 ==========
+
+--- u09-q010 ---
+question: "Was sind die Gründe für „Checkerboarding”. Wie kann es verhindert werden?"
+blueprint: [
+  "Checkerboarding = unphysikalisches Schachbrettmuster im Druckfeld (odd-even decoupling), häufig bei collocated Anordnung + zentralen Diskretisierungen.",
+  "Grund: Druckgradient und Divergenz koppeln numerisch nicht stark genug; bestimmte Druckmoden beeinflussen die Massenflüsse nicht → sie werden nicht „gesehen“.",
+  "Vermeidung: staggered Grid (Geschwindigkeiten an Flächen, Druck im Zentrum) oder Rhie–Chow-Interpolation (momentum interpolation) bei collocated FVM.",
+  "Zusätzlich: geeignete Druck-Glättung/Filter nur als Notlösung; bessere ist korrekte Kopplung."
+]
+mistakes: [
+  "Checkerboarding als Konvergenzproblem statt als Diskretisierungskopplungsproblem behandeln.",
+  "Nur Druck glätten/filtern → Symptom bekämpft, nicht Ursache.",
+  "Rhie–Chow falsch implementieren (führt zu übermäßiger numerischer Diffusion)."
+]
+
+--- u09-q011 ---
+question: "Ergeben sich numerische Vorteile, wenn eine Zeitableitung auch in einem stationären Problem berücksichtigt wird?"
+blueprint: [
+  "Ja: Pseudo-Transient Continuation. Eine künstliche Zeitableitung stabilisiert die Iteration und führt das System robust zum stationären Fixpunkt.",
+  "Vorteile: bessere Diagonaldominanz, Dämpfung hochfrequenter Fehler, weniger Divergenz bei stark nichtlinearen Problemen.",
+  "Man kann CFL/Δt als „Relaxationsparameter“ nutzen: kleines Δt = stabiler (langsamer), großes Δt = schneller (aber riskanter).",
+  "Die stationäre Lösung bleibt unverändert, solange man bis zu ∂/∂t→0 konvergiert."
+]
+mistakes: [
+  "Pseudo-Zeit nicht bis stationär konvergieren lassen (Lösung hängt dann von Δt ab).",
+  "Δt nur groß wählen, um schneller zu sein → Instabilität.",
+  "Pseudo-Zeit als physikalische Zeit interpretieren (bei stationärem Problem nicht)."
+]
+
+--- u09-q012 ---
+question: "Warum darf überhaupt eine Zeitableitung in den Erhaltungsgleichungen berücksichtigt werden, wenn ein stationäres Problem gelöst werden soll?"
+blueprint: [
+  "Ein stationäres Problem ist der Grenzfall der instationären Gleichungen für t→∞, wenn ∂/∂t → 0.",
+  "Man kann daher die stationäre Lösung als Fixpunkt einer Zeitintegration auffassen und mittels Pseudo-Zeititeration ansteuern.",
+  "Mathematisch ändert die zusätzliche Zeitableitung die stationäre Lösung nicht, solange man bis zum Zustand ∂φ/∂t≈0 iteriert.",
+  "Praktisch dient der Term als Relaxation/Stabilisierung und erlaubt kontrollierte Iterationsschritte."
+]
+mistakes: [
+  "Pseudo-Zeit ableiten und nach wenigen Schritten stoppen → nicht stationär.",
+  "Pseudo-Zeit als echte Zeit interpretieren und Transienten überbewerten.",
+  "Keine Kriterien für ∂/∂t≈0/Monitore setzen."
+]
+
+--- u09-q013 ---
+question: "Wann kann die zeitliche Iteration bei der Lösung eines stationären Problems beendet werden?"
+blueprint: [
+  "Wenn sich die Lösung nicht mehr mit (Pseudo-)Zeit ändert: ‖φ^{n+1}−φ^n‖ klein und Monitore (Δp, Kräfte, ṁ) stationär.",
+  "Wenn Residuen der Gleichungen unter vorgegebenen Toleranzen liegen (und nicht nur stagnieren).",
+  "Wenn globale Bilanzen erfüllt sind (Massenbilanz: Ein−Aus≈0; Energie-/Impulsbilanz konsistent).",
+  "Wenn zusätzlich eine Gitter-/Δt-Unabhängigkeit geprüft ist (Verifikation), falls gefordert."
+]
+mistakes: [
+  "Stoppen nur wegen kleiner Residuen, obwohl Kräfte/Δp noch driften.",
+  "Bilanzen nicht prüfen (Kontinuität kann lokal ok aussehen, global aber nicht).",
+  "Zu strenge Residuenforderung ohne Nutzen → unnötige Rechenzeit."
+]
+
+--- u09-q014 ---
+question: "Wie wird das Druckfeld bei einer inkompressiblen Strömung berechnet?"
+blueprint: [
+  "Druck ergibt sich aus der Bedingung ∇·u = 0 (Kontinuität) in Kombination mit der Impulsgleichung.",
+  "In Projection/Fractional-Step: aus u* wird eine Poisson-Gleichung für p′ abgeleitet: ∇²p′ = (ρ/Δt)∇·u*; danach Korrektur von u und p.",
+  "In SIMPLE/PISO: Druckkorrekturgleichung wird aus Kontinuität + linearisiertem Momentum hergeleitet; p wird iterativ korrigiert, bis Massenbilanz erfüllt ist.",
+  "Da p nur bis auf Konstante bestimmt ist, wird ein Referenzdruck gesetzt (oder Mittelwertbedingung)."
+]
+mistakes: [
+  "Druck als „bekannt“ behandeln oder aus EOS bestimmen (bei inkompressibel nicht).",
+  "Keinen Referenzdruck setzen → Singularität/Drift.",
+  "Inkompatible BC für Druck/Velocity wählen → Massenerhaltung nicht erfüllbar."
+]
+
+--- u09-q015 ---
+question: "Unter welchen Bedingungen müssen die Erhaltungsgleichungen für Energie, Masse und Impuls gekoppelt werden, bzw. unter welchen Bedingungen ist das nicht notwendig?"
+blueprint: [
+  "Stark gekoppelt, wenn Dichte/Temperatur/Kompressibilität eine Rolle spielen: kompressible Strömung ⇒ Masse, Impuls, Energie + EOS müssen gemeinsam konsistent sein.",
+  "Gekoppelt, wenn Stoffwerte/ρ von T oder Zusammensetzung abhängen (thermische Auftriebsströmung, Verbrennung, variable Dichte).",
+  "Schwach/entkoppelt möglich bei inkompressibler, isothermer Strömung mit konstanten Stoffwerten: Energie kann als passiver Skalar nach dem Strömungsfeld gelöst werden (one-way coupling).",
+  "Boussinesq/Low-Mach: teilweise Kopplung (T beeinflusst ρ nur im Auftriebsterm; sonst entkoppelbar).",
+  "Numerisch: gekoppelte Lösung erhöht Robustheit, kostet aber mehr (größere Matrix); segregiert kann funktionieren, braucht aber Iterationen."
+]
+mistakes: [
+  "Energiegleichung entkoppeln, obwohl ρ(T) stark variiert → falsche Strömung.",
+  "Kopplung als rein numerische Entscheidung sehen (oft physikalisch notwendig).",
+  "One-way coupling nutzen, obwohl Rückwirkung (z.B. Buoyancy, k(T)) relevant ist."
+]
+
+
+========== UNIT u10 ==========
+
+--- u10-q012 ---
+question: "Können Sie mit Hilfe eines Flussdiagramms die Unterschiede im Lösungsalgorithmus für kompressible und inkompressible Strömungen beschreiben?"
+blueprint: [
+  "Inkompressibel (typisch SIMPLE/PISO):",
+  "  1) Guess p → solve Momentum → u*; 2) solve Druckkorrektur/Poisson aus ∇·u=0 → p′; 3) korrigiere p,u; 4) iteriere bis Residuen/Bilanzen ok.",
+  "Kompressibel (typisch density-based):",
+  "  1) Gegeben Q^n=(ρ,ρu,ρE,…) → berechne Flüsse F(Q) (mit u±a) an Faces (Riemann/Upwind);",
+  "  2) Update Q^{n+1} aus konservativer Bilanz (explizit/implizit);",
+  "  3) Berechne p aus EOS (z.B. ideales Gas) aus (ρ,E,T);",
+  "  4) Iteriere/Zeitschritte bis stationär oder bis Endzeit.",
+  "Kernunterschied: inkompressibel bestimmt p aus Kontinuität; kompressibel bestimmt p aus EOS und löst Kontinuität als dynamische Gleichung."
+]
+mistakes: [
+  "Kompressibel ebenfalls als reines Druck-Poisson-Problem darstellen (falsch; Kontinuität ist dynamisch).",
+  "EOS-Schritt vergessen (p aus ρ,E,T).",
+  "Unterschiede bei Randbedingungen (Charakteristiken) unterschlagen."
+]
+
+--- u10-q013 ---
+question: "Nennen Sie zwei wesentliche Herausforderungen, die mit der numerischen Lösung von kompressiblen Strömungen assoziiert werden können."
+blueprint: [
+  "Diskontinuitäten/Schocks: benötigen schock-capturing (Upwind, Limiters), sonst Oszillationen (Gibbs) und Instabilität.",
+  "Akustische Steifigkeit: große Schallgeschwindigkeit a → sehr restriktive Δt für explizite Verfahren (CFL basiert auf |u|+a), v.a. bei Low-Mach.",
+  "Starke nichtlineare Kopplung von ρ,u,p,T über EOS/Energie → robuste gekoppelte Solver/Linearisierung nötig.",
+  "Randbedingungen: Anzahl der vorzugebenden Größen hängt von Sub-/Supersonik (Charakteristiken) ab; falsche BC → Divergenz."
+]
+mistakes: [
+  "CDS ohne Limitierung an Schocks verwenden → spurious oscillations.",
+  "Low-Mach mit explizit kompressiblem Solver ohne Preconditioning → extrem ineffizient.",
+  "BC wie bei inkompressibel setzen (z.B. p überall) → überbestimmt."
+]
+
+--- u10-q014 ---
+question: "Nennen Sie Auswahlkriterien für die Erhaltungsgleichungen, die in einer kompressiblen Strömung gelöst werden müssen. Vergleichen Sie Ihre Antwort mit Ihrer Antwort in Unit 7."
+blueprint: [
+  "Kompressibel allgemein: Kontinuität + Impuls (3 Komponenten) + Energie müssen gelöst werden, damit ρ, u, T/p konsistent bestimmt sind.",
+  "Zusätzlich: Zustandsgleichung (EOS) als Schließung, z.B. p=p(ρ,T); Stoffwerte μ(T), k(T) ggf. modellieren.",
+  "Isotherm kompressibel (Sonderfall): Energie kann durch T=const ersetzt werden; dann braucht man trotzdem Kontinuität + Impuls + EOS p=ρRT.",
+  "Mehrkomponenten/Reaktion: Speziesgleichungen + Reaktionswärme; Turbulenz: zusätzliche Modellgleichungen.",
+  "Vergleich zu Unit 7 (FVM): konservative Variablen (ρ,ρu,ρE) sind für Schockauflösung vorteilhaft; Flux-Formulierung an Faces ist zentral."
+]
+mistakes: [
+  "Energiegleichung weglassen bei nicht-isothermen kompressiblen Strömungen → falsches p/ρ/T.",
+  "EOS/Schließung vergessen (System bleibt offen).",
+  "Nicht-konservative Form bei Schocks verwenden → falsche Sprungbedingungen."
+]
+
+--- u10-q015 ---
+question: "Wie ändern sich Druck und Dichte am Staupunkt eines Staukörpers, wenn es sich um eine inkompressible Strömung handelt?"
+blueprint: [
+  "Am Staupunkt gilt u=0; für inkompressibel bleibt ρ konstant (keine Dichteänderung).",
+  "Der Druck steigt vom Freistrom auf den Staudruck (Bernoulli, ohne Verluste): p0 = p∞ + (1/2)ρ u∞².",
+  "Damit: p nimmt zu, ρ bleibt gleich."
+]
+mistakes: [
+  "Dichteänderung angeben, obwohl inkompressibel (ρ=const).",
+  "Bernoulli ohne Voraussetzungen (inviscid, entlang Stromlinie) erwähnen ohne Hinweis.",
+  "Staudruck mit dynamischem Druck verwechseln (p0 vs. q)."
+]
+
+--- u10-q016 ---
+question: "Wie ändern sich Druck und Dichte am Staupunkt eines Staukörpers, wenn es sich um eine kompressible Strömung handelt?"
+blueprint: [
+  "Am Staupunkt u=0; bei kompressibler Strömung führt die Abbremsung zu Kompression ⇒ p und ρ steigen (und T steigt bei adiabatischer Stauung).",
+  "Für isentropes Abbremsen (ideales Gas):",
+  "T0/T∞ = 1 + (γ−1)/2 · Ma∞²,",
+  "p0/p∞ = (T0/T∞)^{γ/(γ−1)} = (1 + (γ−1)/2 Ma∞²)^{γ/(γ−1)},",
+  "ρ0/ρ∞ = (T0/T∞)^{1/(γ−1)} = (1 + (γ−1)/2 Ma∞²)^{1/(γ−1)}.",
+  "Damit: p↑ und ρ↑ (stärker je größer Ma)."
+]
+mistakes: [
+  "Inkompressible Bernoulli-Formel p0=p∞+½ρu² ohne Kompressibilitätskorrektur verwenden.",
+  "Isentropie annehmen, obwohl Schock/Verluste vorhanden sind (p0 sinkt hinter Schock).",
+  "γ/R/T-Beziehungen durcheinanderbringen."
+]
+
+--- u10-q017 ---
+question: "In einer Dampfturbine reduziert sich die Temperatur des Dampfes von 800K auf 400K. Wie ändert sich die Schallgeschwindigkeit unter Annahme, dass sich der Dampf wie ein ideales Gas verhält?"
+blueprint: [
+  "Für ideales Gas: a = √(γRT) ⇒ bei konstantem γ,R gilt a ∝ √T.",
+  "Verhältnis: a2/a1 = √(T2/T1) = √(400/800) = √0.5 ≈ 0.707.",
+  "Die Schallgeschwindigkeit sinkt auf ca. 70.7% des Ausgangswerts (≈ 29.3% geringer)."
+]
+mistakes: [
+  "Lineare Abhängigkeit a∝T annehmen (statt √T).",
+  "γ als T-abhängig komplett ignorieren (für grobe Abschätzung ok, aber Annahme nennen).",
+  "Einheitenfehler (K vs °C)."
+]
+
+--- u10-q018 ---
+question: "Welche Kräfte dominieren im Falle großer Geschwindigkeiten? Wie kann die Impulserhaltung vereinfacht werden?"
+blueprint: [
+  "Bei großen Geschwindigkeiten und typischerweise großen Reynolds-Zahlen dominieren Trägheits-/Konvektionskräfte gegenüber viskosen Kräften.",
+  "Dann kann man im Impuls die viskosen Terme (∇·τ) häufig vernachlässigen ⇒ Euler-Gleichungen.",
+  "Vereinfachte Impulserhaltung (ohne Volumenkräfte): ρ(∂u/∂t + u·∇u) = −∇p.",
+  "Je nach Problem können auch Schwerkraft/andere Volumenkräfte im Vergleich zur Trägheit klein sein und entfallen."
+]
+mistakes: [
+  "Viskosität komplett ignorieren auch in Wandnähe (Grenzschicht bleibt wichtig).",
+  "Kompressibilität mit Inviscid gleichsetzen (unabhängige Annahmen).",
+  "Druckkräfte als „klein“ annehmen (bei Hochgeschwindigkeit sind Druck-/Trägheitskräfte beide wichtig)."
+]
+
+--- u10-q019 ---
+question: "Warum sind zentrale Differenzen für die Lösung der Eulergleichung fragwürdig?"
+blueprint: [
+  "Euler-Gleichungen sind hyperbolisch und können Schocks/Diskontinuitäten enthalten.",
+  "Reine zentrale Differenzen sind nicht upwind-bewusst (keine Charakteristikrichtung) und liefern wenig/nicht genug numerische Dissipation → Oszillationen an Schocks (Gibbs) und Instabilität.",
+  "Für stabile Schockauflösung braucht man upwind/Godunov-artige Flüsse basierend auf Eigenwerten (u±a) oder künstliche Viskosität/Limitierung.",
+  "CDS kann zudem unbounded sein und führt zu nichtphysikalischen negativen Dichten/Drücken, wenn nicht stabilisiert."
+]
+mistakes: [
+  "CDS wegen 2. Ordnung pauschal als beste Wahl sehen (Hyperbolik/Schocks ignoriert).",
+  "Numerische Dissipation als „immer schlecht“ ansehen (für Schockcapturing nötig).",
+  "Limiter/Riemann-Solver weglassen → starke Oszillationen."
+]
+
+--- u10-q020 ---
+question: "Was sind die konventionelle Randbedingungen, die am Eingang/Ausgang/Wand des Rechengebiets gesetzt werden müssen für a. Isotherme inkompressible Strömungen b. Isotherme kompressible Strömungen c. Strömungen mit variabler Dichte d. Reagierende, kompressible Strömungen"
+blueprint: [
+  "Allgemein: Man muss genau so viele Randdaten vorgeben, wie Charakteristiken in das Gebiet einlaufen (kompressibel) bzw. um das Problem zu schließen (inkompressibel).",
+  "a) Isotherm inkompressibel (∇·u=0, ohne Energie): Einlass z.B. u-Profil oder ṁ; Auslass z.B. statischer Druck p; Wände: no-slip u=0, u_n=0.",
+  "b) Isotherm kompressibel: Einlass typ. Totaldruck p0 + Totalt. T0 (hier T0=const) oder ρ/u; Auslass (subsonisch) typ. statischer Druck p; Wände (viskos): no-slip; (inviscid): slip; EOS p=ρRT mit T=const.",
+  "c) Variable Dichte (Low-Mach/thermisch): wie inkompressibel für u/p, aber zusätzlich ρ(T) bzw. T am Einlass; Auslass p; Wände: no-slip + thermische BC (T oder qʺ), falls Energie gelöst.",
+  "d) Reagierend kompressibel: Einlass: p0,T0 und Spezieszusammensetzung Y_k (oder Massenströme) + Turbulenzgrößen; Auslass: p (subsonisch) / extrapoliert (supersonisch); Wände: no-slip + Wärme-BC + ggf. Spezies-BC (no-flux/catalytic)."
+]
+mistakes: [
+  "Zu viele Randbedingungen gleichzeitig setzen (überbestimmt), z.B. p und ṁ am selben Rand bei inkompressibel.",
+  "Kompressible BC wie inkompressibel behandeln (Charakteristiken ignorieren).",
+  "Bei reagierenden Fällen Spezies-/Energie-Randwerte vergessen (System nicht geschlossen)."
+]
+
+--- u10-q021 ---
+question: "Nennen Sie zwei mögliche Arten, die Randbedingungen am Eingang/Ausgang für inkompressible Strömungen zu definieren."
+blueprint: [
+  "Variante 1: Velocity inlet (u-Profil oder ṁ/Volumenstrom) + Pressure outlet (p-Referenz).",
+  "Variante 2: Massflow inlet (ṁ) + Pressure outlet (p).",
+  "Alternative (je nach Setup): Pressure inlet (Total-/statischer p) + Outflow/Neumann für u (wenn Rückströmung kontrolliert) – muss konsistent sein."
+]
+mistakes: [
+  "p am Einlass und am Auslass vorgeben ohne Referenz/Flussdefinition → unklare Massenbilanz.",
+  "Am Einlass sowohl u als auch p vollständig festlegen (kann überbestimmt sein).",
+  "Rückströmung am Auslass ignorieren (führt zu Instabilität)."
+]
+
+--- u10-q022 ---
+question: "Warum können Sie nicht gleichzeitig die Druckdifferenz und die Massenströme als Randbedingungen (bei inkompressiblen Strömungen) vorgeben?"
+blueprint: [
+  "Für ein gegebenes System (Geometrie + Stoffwerte) sind Druckdifferenz Δp und Massenstrom ṁ über die Impulserhaltung gekoppelt (z.B. Poiseuille).",
+  "Gibt man sowohl Δp als auch ṁ vor, ist das Problem überbestimmt; eine Lösung existiert nur, wenn beide Vorgaben exakt konsistent sind.",
+  "In inkompressiblen Lösern dient Druck dazu, die Kontinuität zu erfüllen; man wählt typischerweise entweder „treibende“ BC (Druck) oder „resultierende“ BC (ṁ/Velocity), aber nicht beides gleichzeitig."
+]
+mistakes: [
+  "Δp und ṁ gleichzeitig vorgeben und dann Konvergenzprobleme als Solverfehler interpretieren.",
+  "Druck als unabhängigen Freiheitsgrad sehen (bei inkompressibel ist er gekoppelt an Massenbilanz).",
+  "Auslassdruckniveau nicht setzen (gauge) und gleichzeitig ṁ erzwingen → inkonsistent."
+]
+
+--- u10-q023 ---
+question: "Wie ändern sich die Randbedingungen für Hochgeschwindigkeitsströmungen, wenn Reibung und Wärmeleitung vernachlässigt werden können?"
+blueprint: [
+  "Wenn Reibung und Wärmeleitung vernachlässigt werden ⇒ Euler, adiabatisch/inviscid: an Wänden Slip-Bedingung (u_n=0, keine Schubspannung) und keine thermische Randbedingung für q nötig.",
+  "Ein-/Auslass müssen charakteristikbasiert gesetzt werden: Anzahl vorzugebender Größen hängt von Sub-/Supersonik ab.",
+  "Supersonischer Einlass: alle Zustandsgrößen vorgeben (alle Charakteristiken laufen hinein).",
+  "Supersonischer Auslass: keine Zustandsgrößen vorgeben (alles läuft hinaus) → extrapolieren.",
+  "Subsonischer Auslass: typischerweise statischen Druck vorgeben; subsonischer Einlass: typischerweise Totalgrößen (p0,T0) + Anströmwinkel, Rest aus Innerem."
+]
+mistakes: [
+  "Wie inkompressibel BC setzen (p-Outlet überall) ohne Charakteristikbetrachtung.",
+  "No-slip trotz inviscid Annahme setzen → künstliche Grenzschicht.",
+  "Bei supersonic outlet p vorgeben → Reflexionen/Instabilität."
+]
+
+
+========== UNIT u11 ==========
+
+--- u11-q008 ---
+question: "Was bedeutet “direkte numerische Simulation (DNS)” einer turbulenten Strömung?"
+blueprint: [
+  "DNS löst die instationären 3D Navier–Stokes-Gleichungen und löst alle turbulenten Skalen bis zur Kolmogorov-Skala numerisch auf.",
+  "Es werden keine Turbulenzmodelle verwendet; nur Diskretisierungs-/Rundungsfehler bleiben.",
+  "Anforderungen: Δx,Δt müssen klein genug sein, um η und τ_η aufzulösen (z.B. k_max η ≳ 1).",
+  "DNS liefert vollständige Felder und ist Referenz für Modell-/LES/RANS-Validierung."
+]
+mistakes: [
+  "DNS als „sehr feines RANS“ beschreiben (DNS hat kein Turbulenzmodell).",
+  "Nur räumliche Auflösung nennen und Zeitschrittauflösung vergessen.",
+  "DNS für industrielle Re/Geometrien als realistisch darstellen (meist zu teuer)."
+]
+
+--- u11-q009 ---
+question: "Was sind die Vor- und Nachteile der Direkten Numerischen Simulation?"
+blueprint: [
+  "Vorteile: höchste physikalische Genauigkeit (alle Skalen), keine Modellunsicherheit; vollständige Datenbasis für Statistik, Modellbildung und Validierung.",
+  "Vorteile: liefert Referenzlösungen und Einsicht in Turbulenzmechanismen (Energie-/Impulsbudgets, Strukturen).",
+  "Nachteile: extrem hoher Rechenaufwand (Gitter/Zeitschritt), Speicherbedarf riesig; praktisch nur für niedrige Re und einfache Geometrien.",
+  "Nachteile: lange Simulationszeiten für statistische Konvergenz (viele Eddy-Turnover-Zeiten)."
+]
+mistakes: [
+  "DNS als „immer exakte Wahrheit“ ohne Hinweis auf numerische Fehler/BC/Statistik interpretieren.",
+  "Rechenaufwand nur qualitativ nennen (Skalierung mit Re ist entscheidend).",
+  "DNS mit LES verwechseln (LES modelliert Subgrid)."
+]
+
+--- u11-q010 ---
+question: "Warum sind niedrige Reynoldszahlen für eine DNS notwendig?"
+blueprint: [
+  "Mit steigender Reynolds-Zahl werden die kleinsten Turbulenzskalen kleiner: η/L ~ Re^{−3/4} (Kolmogorov-Skalierung).",
+  "Damit wächst die notwendige Anzahl Gitterpunkte stark: N ~ (L/η)³ ~ Re^{9/4} (3D).",
+  "Zusätzlich muss Δt klein genug sein, um τ_η aufzulösen, und es werden viele Zeitschritte für Statistik benötigt.",
+  "Folge: DNS wird bei hohen Re (typisch industriell) numerisch unpraktikabel → daher nur niedrige Re bzw. einfache kanonische Strömungen."
+]
+mistakes: [
+  "Nur „weil es teuer ist“ sagen ohne Skalenargument (η wird kleiner).",
+  "Rechenaufwand linear in Re annehmen (ist viel stärker).",
+  "Annehmen, dass höhere Ordnung allein das Problem löst (Skalen müssen trotzdem aufgelöst werden)."
+]
+
+--- u11-q011 ---
+question: "Was ist das wesentliche Kriterium für eine ausreichende räumliche Auflösung in einer DNS? Nennen Sie eine Korrelation dieser Größe mit der Reynoldszahl."
+blueprint: [
+  "Kriterium: die kleinsten Skalen (Kolmogorov-Skala η) müssen aufgelöst werden; typische Forderung: Δx,Δy,Δz = O(η) bzw. k_max η ≳ 1 (spektral).",
+  "Kolmogorov-Skala: η=(ν³/ε)^{1/4}.",
+  "Korrelation: η/L ~ Re^{−3/4} ⇒ L/η ~ Re^{3/4}.",
+  "Damit skaliert die Gitterpunktzahl in 3D ungefähr wie N ~ (L/η)³ ~ Re^{9/4} (sehr starke Abhängigkeit)."
+]
+mistakes: [
+  "Nur Grenzschicht-y+ nennen (DNS braucht überall η-Auflösung, nicht nur an der Wand).",
+  "η mit Integralmaßstab L verwechseln (größte vs. kleinste Skalen).",
+  "Skalierung mit Re falsch (linear statt Re^{9/4})."
+]
+
+--- u11-q012 ---
+question: "Nennen Sie zwei alternative Simulationsmethoden zu einer DNS für den Fall, dass die DNS numerisch nicht durchführbar (d.h. zu teuer) ist."
+blueprint: [
+  "RANS (Reynolds-Averaged Navier–Stokes): alle turbulenten Skalen modelliert → günstig, aber Modellunsicherheit.",
+  "LES (Large Eddy Simulation): große Skalen aufgelöst, kleine (Subgrid) modelliert → teurer als RANS, günstiger als DNS, bessere Transienten/Strukturen.",
+  "Optional als Hybrid: DES/IDDES (RANS nahe Wand, LES im Kern)."
+]
+mistakes: [
+  "LES als DNS bezeichnen (Subgrid wird modelliert).",
+  "RANS als „immer falsch“ darstellen (kann für viele Engineering-Fälle ausreichend sein).",
+  "DNS-Alternativen nennen, die keine Turbulenz abbilden (laminar)."
+]
+
+--- u11-q013 ---
+question: "Skizzieren Sie ein laminares und ein turbulentes Geschwindigkeitsprofil für eine Rohrströmung. Skizzieren Sie ein drittes Geschwindigkeitsprofil für die gleiche mittlere Geschwindigkeit aber einen höheren Turbulenzgrad."
+blueprint: [
+  "Laminar (Hagen–Poiseuille): parabolisches Profil u(r)=u_max(1−(r/R)²); stark gekrümmt, u_max = 2 Ū.",
+  "Turbulent: „volleres“/plug-artigeres Profil mit flachem Kern und steilem Gradienten nahe Wand (log-law/Power-law).",
+  "Höherer Turbulenzgrad (bei gleichem Ū): stärkere Durchmischung ⇒ noch flacherer Kern (näher an Plug) und noch steilerer Wandgradient (größere effektive turbulente Viskosität).",
+  "Qualitativ: laminar = stark gekrümmt; turbulent = abgeflacht; „noch turbulenter“ = noch stärker abgeflacht."
+]
+mistakes: [
+  "Mittlere Geschwindigkeit Ū nicht konstant halten (Vergleich unklar).",
+  "Turbulentes Profil als parabolisch zeichnen (falsch).",
+  "Turbulenzgrad mit Reynolds-Zahl ohne Hinweis auf Profilform verwechseln."
+]
+
+--- u11-q014 ---
+question: "Was bedeutet “Reynolds Zerlegung”? Definieren Sie diese Zerlegung und beschreiben Sie alle Terme in der Gleichung."
+blueprint: [
+  "Reynolds-Zerlegung: Aufspaltung einer instationären Größe in Mittelwert + Schwankung.",
+  "Definition: φ(x,t) = \\bar{φ}(x) + φ'(x,t), mit \\bar{φ} = Mittelwert und φ' = Fluktuation.",
+  "Für Geschwindigkeit: u_i = \\bar{u}_i + u_i'.",
+  "Eigenschaft: \\overline{φ'} = 0 (Mittelwert der Fluktuation ist null).",
+  "In RANS führt das Einsetzen in die Gleichungen zu zusätzlichen Korrelations-/Reynolds-Spannungstermen \\overline{u_i' u_j'}."
+]
+mistakes: [
+  "Fluktuation nicht als zeitabhängig/stochastisch beschreiben.",
+  "Annehmen, dass \\overline{φ'} ≠ 0 (per Definition ist es 0).",
+  "Reynolds-Spannungen mit Viskosität verwechseln (sie sind Korrelationen, kein Materialgesetz)."
+]
+
+--- u11-q015 ---
+question: "Wie können Mittelwerte definiert werden? Geben Sie verschiedene Definitionen an und erklären Sie ihre jeweilige Bedeutung."
+blueprint: [
+  "Zeitmittel: \\bar{φ}(x)=lim_{T→∞}(1/T)∫_{t0}^{t0+T} φ(x,t) dt (stationäre Turbulenz, Messsignal).",
+  "Ensemblemittel: ⟨φ⟩ = ∫ φ P(φ) dφ (gedanklich viele Realisierungen, wichtig bei nichtstationären Prozessen).",
+  "Räumliches Mittel: (1/V)∫_V φ dV (z.B. homogene Turbulenz, LES-Filter ähnlich).",
+  "Phasenmittel: Mittel über gleiche Phase eines periodischen Prozesses (z.B. Motorzyklus).",
+  "Favre-Mittel (dichtegewichtet, kompressibel): \\tilde{φ} = \\overline{ρφ}/\\overline{ρ}; Fluktuation φ'' = φ − \\tilde{φ}."
+]
+mistakes: [
+  "Zeit- und Ensemblemittel ohne Ergodizitätsannahme gleichsetzen.",
+  "Favre-Mittel in inkompressiblen Fällen als nötig darstellen (meist \\tilde{φ}≈\\bar{φ}).",
+  "Filter (LES) und Mittelung (RANS) verwechseln (ähnlich, aber andere Ziele)."
+]
+
+--- u11-q016 ---
+question: "Was ergibt die zeitliche Mittelung einer turbulenten Schwankungsgröße?"
+blueprint: [
+  "Für eine Reynolds-Zerlegung φ = \\bar{φ} + φ' gilt per Definition der Fluktuation: \\overline{φ'} = 0.",
+  "Zeitmittel der Schwankungsgröße ist also null (bei ausreichend langer Mittelungszeit und stationärer Statistik).",
+  "Nicht-null sind Mittelwerte von Produkten, z.B. \\overline{u'v'} oder \\overline{u'^2} → Reynolds-Spannungen bzw. turbulente kinetische Energie k=(1/2)\\overline{u_i' u_i'}."
+]
+mistakes: [
+  "Annehmen, dass \\overline{φ'} eine „kleine“ Zahl ist statt exakt 0 per Definition.",
+  "Zu kurze Mittelungszeit → scheinbar \\overline{φ'}≠0 (statistischer Fehler).",
+  "Produkte von Fluktuationen fälschlich ebenfalls zu 0 mitteln."
+]
+
+
+========== UNIT u12 ==========
+
+--- u12-q012 ---
+question: "Skizzieren Sie die Herleitung der Favre-gemittelten Impulserhaltung. Mitteln Sie den konvektiven Term."
+blueprint: [
+  "Start (kompressibel, konservativ): ∂(ρu_i)/∂t + ∂(ρu_i u_j)/∂x_j = −∂p/∂x_i + ∂τ_{ij}/∂x_j + ρf_i.",
+  "Reynolds-Mittelung: ∂\\overline{ρu_i}/∂t + ∂\\overline{ρu_i u_j}/∂x_j = −∂\\bar{p}/∂x_i + ∂\\overline{τ_{ij}}/∂x_j + \\overline{ρ}f_i.",
+  "Mit Favre-Mittel: \\overline{ρu_i}=\\bar{ρ}\\tilde{u}_i.",
+  "Konvektiver Term (Skizze): \\overline{ρu_i u_j} = \\bar{ρ}\\widetilde{u_i u_j} = \\bar{ρ}(\\tilde{u}_i\\tilde{u}_j + \\widetilde{u_i'' u_j''}).",
+  "Damit: ∂(\\bar{ρ}\\tilde{u}_i)/∂t + ∂(\\bar{ρ}\\tilde{u}_i\\tilde{u}_j)/∂x_j = −∂\\bar{p}/∂x_i + ∂\\overline{τ_{ij}}/∂x_j − ∂(\\bar{ρ}\\widetilde{u_i'' u_j''})/∂x_j + \\bar{ρ}f_i.",
+  "Der zusätzliche Term −\\bar{ρ}\\widetilde{u_i''u_j''} ist der Favre-Reynolds-Spannungstensor (Schließungsproblem)."
+]
+mistakes: [
+  "Favre-Zerlegung nicht nutzen und stattdessen \\overline{ρu_i u_j}≈\\bar{ρ}\\bar{u}_i\\bar{u}_j setzen (Korrelation fehlt).",
+  "Reynolds- und Favre-Fluktuationen verwechseln (u' vs. u'').",
+  "Konservative Form nicht beibehalten (für Kompressibilität/Schocks wichtig)."
+]
+
+--- u12-q013 ---
+question: "Was versteht man unter “Schließungsproblem der Turbulenz“?"
+blueprint: [
+  "Durch Reynolds-/Favre-Mittelung entstehen zusätzliche Unbekannte (Korrelationen) wie \\overline{u_i' u_j'} bzw. \\widetilde{u_i'' u_j''}.",
+  "Die gemittelten Gleichungen enthalten damit mehr Unbekannte als Gleichungen → das System ist nicht geschlossen.",
+  "Das „Schließungsproblem“ ist die Aufgabe, diese zusätzlichen Terme durch Modelle auszudrücken (z.B. Eddy-Viscosity/Boussinesq, Reynolds-Stress-Modelle).",
+  "Beispiel: RANS-Impuls enthält −ρ∂\\overline{u_i' u_j'}/∂x_j; dafür braucht man eine Beziehung für \\overline{u_i' u_j'}."
+]
+mistakes: [
+  "Schließungsproblem als rein numerisches Problem verstehen (es ist physikalisch/statistisch).",
+  "Nur „zu viele Gleichungen“ sagen (es sind zu viele Unbekannte).",
+  "Reynolds-Spannungen als messbare Eingangsgröße behandeln (sie müssen modelliert/gelöst werden)."
+]
+
+--- u12-q014 ---
+question: "Was sind die wesentlichen Aufgaben des Turbulenzmodells?"
+blueprint: [
+  "Schließen der RANS/Favre-Gleichungen: Modellierung der Reynolds-Spannungen und ggf. turbulenter Skalarflüsse.",
+  "Bereitstellen einer turbulenten Viskosität/Wirbelviskosität μ_t bzw. ν_t oder direkt des Spannungstensors (RSM).",
+  "Abbildung von Produktion, Transport und Dissipation turbulenter kinetischer Energie (z.B. über k, ε, ω).",
+  "Near-wall Verhalten: korrekte Wandmodellierung (Wall functions oder low-Re) und passende Randbedingungen.",
+  "Robustheit/Universalisierung: akzeptable Ergebnisse für verschiedene Strömungstypen (Scherung, Druckgradient, Ablösung, Krümmung) mit möglichst wenigen frei einstellbaren Konstanten."
+]
+mistakes: [
+  "Turbulenzmodell als „Korrektur für schlechte Netze“ interpretieren (Modelle schließen Physik, nicht Numerik).",
+  "Nur μ_t nennen ohne Bezug auf Reynolds-Spannungen/Schließung.",
+  "Wandbehandlung ignorieren (ist oft limitierend für RANS)."
+]
+
+--- u12-q015 ---
+question: "Was ist die turbulente Schubspannung und was ist seine Bedeutung im Hinblick auf die Turbulenzmodellierung?"
+blueprint: [
+  "Turbulente Schubspannung ist eine Off-Diagonal-Komponente der Reynolds-Spannungen, z.B. in 2D: τ_turb = −ρ\\overline{u'v'}.",
+  "Sie beschreibt den mittleren Impulstransport durch turbulente Fluktuationen (Eddy-Transport), analog zur viskosen Schubspannung μ ∂\\bar{u}/∂y.",
+  "In vielen Strömungen (hohe Re) ist |−ρ\\overline{u'v'}| >> |μ ∂\\bar{u}/∂y| und dominiert damit den Wand-/Schertransport.",
+  "Für Eddy-Viscosity-Modelle (Boussinesq): −ρ\\overline{u'v'} ≈ μ_t ∂\\bar{u}/∂y (in einfacher Scherung) ⇒ μ_t muss modelliert werden."
+]
+mistakes: [
+  "Turbulente Schubspannung mit viskoser Schubspannung gleichsetzen (anderer Ursprung).",
+  "Vorzeichen/Definition falsch (häufig −ρ\\overline{u'v'}).",
+  "Annehmen, turbulente Schubspannung sei überall gleich groß (hängt stark von Strömung/Scherspannung ab)."
+]
+
+--- u12-q016 ---
+question: "Erklären Sie das Konzept des Prandtlschen Mischungswegs und wie es für die Modellierung der turbulenten Viskosität genutzt werden kann."
+blueprint: [
+  "Prandtls Mischungsweg l_m ist eine angenommene charakteristische Länge, über die Fluidpakete ihren Impuls „mischen“ (analog zur mittleren freien Weglänge).",
+  "Annahme in einfacher Scherströmung: u' ~ l_m |∂\\bar{u}/∂y| und v' ~ l_m |∂\\bar{u}/∂y| (Größenordnung).",
+  "Dann folgt für die turbulente Schubspannung: −ρ\\overline{u'v'} ~ ρ l_m² |∂\\bar{u}/∂y| (∂\\bar{u}/∂y).",
+  "Vergleich mit Boussinesq: −ρ\\overline{u'v'} = μ_t ∂\\bar{u}/∂y ⇒ μ_t = ρ l_m² |∂\\bar{u}/∂y|.",
+  "Near-wall: l_m ≈ κ y (Kármán-Konstante κ≈0.41) mit Dämpfungsfunktionen; führt zur log-Law-Struktur (0-Gleichungsmodell)."
+]
+mistakes: [
+  "l_m als konstante Länge im gesamten Feld verwenden (gilt i.d.R. nur in speziellen Zonen).",
+  "Vorzeichen/Absolute-Value-Teil in μ_t vergessen (μ_t muss positiv sein).",
+  "Mischungswegmodell in stark separierten/3D-Strömungen ohne Einschränkung anwenden."
+]
+
+--- u12-q017 ---
+question: "Was muss über die Schwankungsgrößen für die Turbulenzmodellierung bekannt sein?"
+blueprint: [
+  "Für RANS werden nicht die instantanen Fluktuationen u'(t) benötigt, sondern ihre Statistik: Korrelationen/Momente wie \\overline{u_i'u_j'}, \\overline{u'T'}, \\overline{u_i'u_i'}.",
+  "Wichtige abgeleitete Größen: k=(1/2)\\overline{u_i'u_i'}, Dissipation ε bzw. ω als Zeitskala, Längenskalen (z.B. l ~ k^{3/2}/ε).",
+  "Modelle benötigen Annahmen über Isotropie/Anisotropie, lokale Gleichgewichte (Produktion≈Dissipation), Wandnäheverhalten usw.",
+  "Ziel der Turbulenzmodellierung ist, diese Statistikgrößen aus Mittelgrößen (\\bar{u}, \\bar{p}, …) und zusätzlichen Modellgleichungen abzuleiten."
+]
+mistakes: [
+  "Annehmen, man müsse u'(t) direkt berechnen (das wäre DNS/LES, nicht RANS).",
+  "Nur k nennen und die benötigten zweiten Momente/Spannungen ignorieren.",
+  "Isotropie annehmen, obwohl stark anisotrope Strömung vorliegt (Krümmung, Rotation, Ablösung)."
+]
+
+--- u12-q018 ---
+question: "Was sind 0-Gleichungsmodelle?"
+blueprint: [
+  "0-Gleichungsmodelle (algebraische Turbulenzmodelle) lösen keine zusätzlichen Transportgleichungen für Turbulenzgrößen.",
+  "Stattdessen wird die turbulente/Wirbelviskosität μ_t (oder ν_t) direkt aus lokalen Mittelgrößen und einer Längenskala bestimmt, z.B. über Prandtls Mischungsweg.",
+  "Typische Form: μ_t = ρ l_m² |∂\\bar{u}/∂y| (in einfacher Scherströmung) mit l_m als algebraische Funktion (κy mit Dämpfung).",
+  "Beispiele: Prandtl-Mischungswegmodell, Baldwin–Lomax (algebraisches BL-Modell)."
+]
+mistakes: [
+  "0-Gleichungsmodelle als „keine Turbulenzmodellierung“ interpretieren (μ_t wird sehr wohl modelliert).",
+  "0-Gleichungsmodelle in beliebigen 3D/abgelösten Strömungen ohne Einschränkung anwenden.",
+  "l_m/μ_t ohne Wanddämpfung nahe der Wand verwenden → falsches Near-wall-Verhalten."
+]
+
+--- u12-q019 ---
+question: "Was sind die Bedingungen, unter denen 0-Gleichungsmodelle eine akzeptable Modellierung der Turbulenz erlauben?"
+blueprint: [
+  "Strömung nahe lokalem Gleichgewicht: Produktion und Dissipation der Turbulenz sind ungefähr im Gleichgewicht (P≈ε); Turbulenz passt sich lokal schnell an.",
+  "Einfacher Scherfluss/angelegte Grenzschicht (attached boundary layer), geringe Krümmung/Rotation, keine starke Ablösung.",
+  "Hohe Reynolds-Zahl mit log-law Bereich; Wandfunktionen/Mischungswegansatz ist gültig.",
+  "Keine starken History-/Konvektions-/Intermittenz-Effekte der Turbulenz (die ein Transportmodell benötigen würden)."
+]
+mistakes: [
+  "0-Gleichungsmodelle bei stark separierten Strömungen oder freien Scherströmungen verwenden.",
+  "Lokale Gleichgewichtsannahme nicht erwähnen (ist Kernvoraussetzung).",
+  "Near-wall Auflösung/Wall functions nicht konsistent wählen (y+ passt nicht)."
+]
+
+--- u12-q020 ---
+question: "Was sind die Vor- und Nachteile von 0-Gleichungsmodellen?"
+blueprint: [
+  "Vorteile: sehr günstig (keine zusätzlichen PDEs), robust, einfach zu implementieren und zu konvergieren.",
+  "Vorteile: für einfache, angelegte Grenzschichten oft brauchbar (Wall function/Mischungsweg).",
+  "Nachteile: geringe Allgemeingültigkeit; versagt häufig bei Ablösung, starken Druckgradienten, Rotation, Krümmung, 3D-Effekten, freien Scherströmungen.",
+  "Nachteile: keine Transport-/History-Effekte (Turbulenz wird rein lokal bestimmt), stark empirisch/tuning-abhängig.",
+  "Nachteile: liefert meist keine eigenständigen Größen wie k, ε für weitere Modelle (z.B. Wärme-/Stofftransport)."
+]
+mistakes: [
+  "0-Gleichungsmodelle als allgemeines Industriemodell darstellen.",
+  "Nur den Rechenzeitvorteil nennen ohne physikalische Limitierungen.",
+  "Annehmen, man könne Ablösung durch „mehr μ_t“ retten (führt oft zu noch falscherer Physik)."
+]
+
+--- u12-q021 ---
+question: "Welche Art Gleichgewicht ist notwendig, damit 0-Gleichungsmodelle angewendet werden können?"
+blueprint: [
+  "Notwendig ist ein lokales Turbulenzgleichgewicht (local equilibrium): Turbulenzproduktion P ist ungefähr gleich der Dissipation ε (P≈ε).",
+  "Damit kann μ_t algebraisch aus lokalen Gradienten/Längenskalen bestimmt werden, ohne Transportgleichungen für k/ε zu lösen.",
+  "Typisch erfüllt in voll entwickelten/angelegten Grenzschichten (log-law Region) und einfachen Scherströmungen."
+]
+mistakes: [
+  "Globales Gleichgewicht (über das gesamte Gebiet) statt lokales Gleichgewicht meinen.",
+  "P≈ε auch in Ablöse-/Wakeströmungen annehmen (dort ist Transport wichtig).",
+  "Gleichgewicht als rein numerische Bedingung interpretieren (ist physikalisch)."
+]
+
+--- u12-q022 ---
+question: "Wie modelliert man den turbulenten Spannungstensor mit Hilfe einer turbulenten Viskosität?"
+blueprint: [
+  "Boussinesq-Hypothese (Eddy-Viscosity): Reynolds-Spannungen werden proportional zur mittleren Verzerrungsrate modelliert.",
+  "Spannungstensor: −ρ\\overline{u_i' u_j'} = 2 μ_t \\bar{S}_{ij} − (2/3)ρk δ_{ij}.",
+  "Mit \\bar{S}_{ij} = (1/2)(∂\\bar{u}_i/∂x_j + ∂\\bar{u}_j/∂x_i) und k=(1/2)\\overline{u_m'u_m'}.",
+  "μ_t wird über Turbulenzmodelle bestimmt, z.B. μ_t = ρ C_μ k²/ε (k-ε) oder μ_t = ρ k/ω (k-ω)."
+]
+mistakes: [
+  "Isotropen Anteil (−2/3 ρk δ_ij) vergessen.",
+  "μ_t als Konstante annehmen (ist feldabhängig).",
+  "Boussinesq ungeprüft bei stark anisotropen Strömungen anwenden (RSM kann nötig sein)."
+]
+
+--- u12-q023 ---
+question: "Was sind 1-Gleichungsmodelle und wie können sie für die Turbulenzmodellierung genutzt werden?"
+blueprint: [
+  "1-Gleichungsmodelle lösen genau eine zusätzliche Transportgleichung für eine Turbulenzgröße.",
+  "Typisch: eine Gleichung für eine turbulente Viskosität/Wirbelviskosität (z.B. Spalart–Allmaras für \\tilde{ν}) oder für k (mit algebraischer Längenskala).",
+  "Aus der gelösten Größe wird μ_t/ν_t berechnet und über Boussinesq die Reynolds-Spannungen geschlossen.",
+  "Vorteil: günstiger als 2-Gleichungsmodelle, oft robust für aerodynamische Grenzschichten; Nachteil: weniger universell, Längenskala meist empirisch/algebraisch."
+]
+mistakes: [
+  "1-Gleichungsmodelle als „0-Gleichungsmodell“ darstellen (es gibt eine PDE!).",
+  "Annehmen, dass damit Anisotropie automatisch erfasst wird (meist Eddy-Viscosity).",
+  "Near-wall-Bedingungen/Wall functions nicht konsistent wählen."
+]
+
+--- u12-q024 ---
+question: "Was sind 2-Gleichungsmodelle und wie können sie für die Turbulenzmodellierung genutzt werden?"
+blueprint: [
+  "2-Gleichungsmodelle lösen zwei Transportgleichungen, um eine Energieskala und eine Längen-/Zeitskala der Turbulenz zu bestimmen.",
+  "Typische Paare: k–ε, k–ω, SST (kombiniert k–ω nahe Wand, k–ε im Außenfeld).",
+  "Aus k und ε/ω wird die Wirbelviskosität berechnet, z.B. μ_t = ρ C_μ k²/ε oder μ_t = ρ k/ω.",
+  "Damit werden Reynolds-Spannungen über Boussinesq geschlossen; 2-Gleichungsmodelle sind deutlich universeller als 0-/1-Gleichungsmodelle, aber teurer und weiterhin modellabhängig."
+]
+mistakes: [
+  "k–ε als „immer beste Wahl“ darstellen (Near-wall/Adverse pressure gradient/Sep. beachten).",
+  "μ_t-Formel falsch (k²/ε vs. k/ω).",
+  "Wandauflösung (y+) nicht an Modell anpassen."
+]
+
+--- u12-q025 ---
+question: "Was bedeuten k und e im k-e-Modell?"
+blueprint: [
+  "k = turbulente kinetische Energie pro Masse: k = (1/2)\\overline{u_i' u_i'}.",
+  "ε (oft als e geschrieben) = Dissipationsrate der turbulenten kinetischen Energie (Umwandlung in Wärme durch Viskosität):",
+  "ε = ν \\overline{(∂u_i'/∂x_j)(∂u_i'/∂x_j)} (bis auf Faktoren je nach Definition).",
+  "k liefert eine Geschwindigkeitsskala, ε eine Zeitskala; typische Längenskala: l ~ k^{3/2}/ε."
+]
+mistakes: [
+  "ε als „Energie“ interpretieren (es ist eine Rate).",
+  "k mit mittlerer kinetischer Energie (1/2)|\\bar{u}|² verwechseln.",
+  "Dimensionsanalyse nicht prüfen (k: m²/s², ε: m²/s³)."
+]
+
+--- u12-q026 ---
+question: "Nennen Sie alle Terme in der Transportgleichung für die kinetische Energie."
+blueprint: [
+  "Typische k-Gleichung (RANS, k–ε): ∂(ρk)/∂t + ∇·(ρu k) = P_k − ρ ε + ∇·[(μ + μ_t/σ_k)∇k] + S_k.",
+  "Terme:",
+  "  • Transient/Speicherung: ∂(ρk)/∂t.",
+  "  • Konvektion: ∇·(ρu k).",
+  "  • Produktion: P_k (Energieübertrag aus Mittelströmung, z.B. P_k=2μ_t \\bar{S}_{ij}\\bar{S}_{ij}).",
+  "  • Dissipation: −ρ ε.",
+  "  • Diffusion: ∇·[(μ + μ_t/σ_k)∇k] (molekular + turbulent).",
+  "  • Quellen/Senken: S_k (z.B. Buoyancy, Kompressibilitätskorrekturen, Modellzusätze)."
+]
+mistakes: [
+  "Produktion und Dissipation verwechseln (Vorzeichen/Physik).",
+  "Diffusion nur als μ∇²k schreiben (turbulente Diffusion μ_t/σ_k fehlt).",
+  "P_k-Formel ohne Bezug zu \\bar{S}_{ij}/μ_t angeben."
+]
+
+--- u12-q027 ---
+question: "Nennen Sie alle Terme in der Transportgleichung für die Dissipation."
+blueprint: [
+  "Typische ε-Gleichung (k–ε): ∂(ρε)/∂t + ∇·(ρu ε) = C_{ε1}(ε/k)P_k − C_{ε2}ρ ε²/k + ∇·[(μ + μ_t/σ_ε)∇ε] + S_ε.",
+  "Terme:",
+  "  • Transient/Speicherung: ∂(ρε)/∂t.",
+  "  • Konvektion: ∇·(ρu ε).",
+  "  • Produktion von ε: +C_{ε1}(ε/k)P_k.",
+  "  • Zerstörung/Dissipation von ε: −C_{ε2}ρ ε²/k.",
+  "  • Diffusion: ∇·[(μ + μ_t/σ_ε)∇ε].",
+  "  • Quellen/Senken: S_ε (z.B. Buoyancy-/Kompressibilitätskorrekturen, Modellzusätze)."
+]
+mistakes: [
+  "ε-Gleichung als „nur Dissipation“ beschreiben (sie hat Produktion/Transport/Diffusion).",
+  "Vorzeichen der ε²/k-Terme vertauschen (Zerstörung).",
+  "Konstanten/σ_ε/μ_t in Diffusion ignorieren (führt zu falscher Modellgleichung)."
+]
+
+
+========== UNIT u13 ==========
+
+--- u13-q004 ---
+question: "Wie unterscheiden sich diese Terme von den zu schließenden Termen im k-e Modell?"
+blueprint: [
+  "k–ε ist ein Eddy-Viscosity-Modell: Reynolds-Spannungen werden nicht komponentenweise gelöst, sondern über Boussinesq mit μ_t modelliert.",
+  "Im k–ε müssen „nur“ die Transportgleichungen für k und ε geschlossen werden (Produktion, Dissipation, Diffusion, Modellkonstanten).",
+  "Im RSM müssen zusätzlich die Terme der Stress-Transportgleichungen modelliert werden (v.a. Druck-Strain Φ_ij und turbulente Diffusion D_ij sowie ε_ij) – deutlich komplexer.",
+  "RSM erfasst Anisotropie direkt; k–ε nimmt (über μ_t) oft isotrope turbulente Viskosität an und kann z.B. Rotation/Curvature schlechter abbilden."
+]
+mistakes: [
+  "k–ε als „vollständig anisotrop“ darstellen (es ist i.d.R. isotrope μ_t).",
+  "Annehmen, RSM brauche keine Modelle (es braucht viele Modelle für Φ_ij, D_ij, …).",
+  "Unterschied zwischen Stressgleichungen (6 PDE) und 2 PDE (k,ε) nicht klar machen."
+]
+
+--- u13-q005 ---
+question: "Was sind die Vorteile/Nachteile der jeweiligen Turbulenmodelle?"
+blueprint: [
+  "0-Gleichung (Mischungsweg/algebraisch): + sehr günstig/robust; − nur für einfache, angelegte Grenzschichten (P≈ε), schlecht bei Ablösung/3D.",
+  "1-Gleichung (z.B. Spalart–Allmaras): + robust und effizient, gut für externe Aerodynamik; − begrenzte Allgemeingültigkeit, Separation/Free shear teils schwächer.",
+  "2-Gleichung (k–ε): + robust, gut für freie Scherströmungen; − Near-wall/Adverse pressure gradient/Separation oft schwach, braucht Wandfunktionen/Low-Re.",
+  "2-Gleichung (k–ω): + gutes Near-wall-Verhalten; − sensitiv auf Freiströmungs-ω, kann Außenfeld beeinflussen; SST mildert das.",
+  "RSM: + erfasst Anisotropie, Rotation, Sekundärströmungen besser; − teuer (mehr Gleichungen), schwieriger zu konvergieren, viele Modellterme.",
+  "LES/DNS (außerhalb RANS): + höhere physikalische Treue; − deutlich teurer (LES) bzw. extrem teuer (DNS)."
+]
+mistakes: [
+  "Ein Modell als universell „bestes“ nennen (Modellwahl ist problemabhängig).",
+  "Kosten/Robustheit unterschätzen (RSM/LES deutlich teurer).",
+  "Wandbehandlung (y+, Wall functions) nicht als entscheidenden Faktor erwähnen."
+]
+
+--- u13-q006 ---
+question: "Warum können konventionelle Turbulenzmodelle wie (bspw. Die Modellierung der turbulenten Viskosität mit Hilfe des Prandtl‘schen Mischungswegs) nicht in Wandnähe angewendet werden?"
+blueprint: [
+  "In unmittelbarer Wandnähe (viskose Unterschicht) dominiert molekulare Viskosität; Turbulenzintensität und Längenskala gehen gegen 0.",
+  "Einfache Modelle (Mischungsweg) basieren oft auf Log-Law/Equilibrium-Annahmen, die erst für größere y+ (typisch >~30) gelten.",
+  "Ohne Dämpfung würde ein Mischungswegmodell eine endliche μ_t an der Wand liefern → falsche Schubspannung/Profil.",
+  "Daher braucht man entweder Wandfunktionen (modellierte Wandzone) oder Low-Re-Modelle, die die Dämpfung der Turbulenz nahe der Wand explizit berücksichtigen."
+]
+mistakes: [
+  "Als Grund nur „weil die Zellen klein sind“ nennen (es ist eine physikalische/Modellannahme-Frage).",
+  "μ_t an der Wand nicht gegen 0 gehen lassen (ohne Dämpfung).",
+  "Wall functions nutzen, aber y+ im falschen Bereich (z.B. y+≈1 oder >>300) → unplausibel."
+]
+
+--- u13-q007 ---
+question: "Was ist das „Wandgesetz“? Nennen Sie die entsprechende Gleichung."
+blueprint: [
+  "Wandgesetz (law of the wall) beschreibt das mittlere Geschwindigkeitsprofil in der Wandnähe turbulenter Grenzschichten in dimensionslosen Größen u^+ und y^+.",
+  "Definition: u^+ = \\bar{u}/u_τ,  y^+ = ρ u_τ y / μ,  u_τ = √(τ_w/ρ) (Reibungsgeschwindigkeit).",
+  "Viskose Unterschicht: u^+ = y^+ (für y^+ ≲ 5).",
+  "Logarithmische Schicht: u^+ = (1/κ) ln(y^+) + B (typisch 30 ≲ y^+ ≲ 300), mit κ≈0.41 und B≈5.",
+  "Wandfunktionen nutzen diese Beziehung, um Wandzellen nicht bis y^+≈1 auflösen zu müssen."
+]
+mistakes: [
+  "u^+ und y^+ falsch definieren (u_τ/τ_w fehlt).",
+  "Log-Law im viskosen Bereich anwenden (y^+ zu klein).",
+  "κ/B als universell exakte Konstanten darstellen (sie variieren je nach Strömung/Rauheit)."
+]
+
+
+========== UNIT u14 ==========
+
+--- u14-q006 ---
+question: "Wodurch werden die kleinen Skalen der Turbulenz generiert?"
+blueprint: [
+  "Kleine Skalen entstehen primär durch die nichtlineare Energiekaskade: große Wirbel strecken/zerlegen sich (vortex stretching) und übertragen Energie zu höheren Wellenzahlen (kleineren ℓ).",
+  "Im Inertialbereich ist dieser Transfer nahezu verlustfrei; erst im Dissipationsbereich wird Energie durch Viskosität in Wärme umgewandelt.",
+  "Charakteristische Skalen: Kolmogorov-Länge η = (ν^3/ε)^{1/4} und Zeitskala τ_η = (ν/ε)^{1/2}.",
+  "Je höher Re, desto größer die Skalentrennung L/η und desto mehr kleine Skalen existieren.",
+  "In LES werden diese kleinsten Skalen nicht aufgelöst, sondern über SGS-Modelle repräsentiert."
+]
+mistakes: [
+  "Kleine Skalen als direkt durch Geometrie erzeugt darstellen (meist entstehen sie aus der Kaskade).",
+  "Dissipation und Kaskade gleichsetzen.",
+  "Annehmen, kleine Skalen seien immer vollständig isotrop (nahe Wänden/bei Rotation/Stratifikation nicht zwingend)."
+]
+
+--- u14-q007 ---
+question: "Warum sind Schließungsansätze für eine LES in der Regel einfacher als für eine RANS Simulation?"
+blueprint: [
+  "LES modelliert nur den Effekt der nicht aufgelösten SGS-Skalen; die energietragenden, anisotropen Großskalen werden direkt gerechnet.",
+  "Die SGS-Skalen sind näher an universellem Verhalten (lokale Isotropie, eher lokales Gleichgewicht), daher funktionieren einfache Schließungen (z. B. Eddy-Viscosity) oft gut.",
+  "RANS dagegen schließt die gesamten Reynolds-Spannungen \\overline{u'_i u'_j} und damit die Wirkung *aller* turbulenten Skalen auf das Mittel → stärker strömungsabhängig, mehr Modellannahmen und Parameter.",
+  "Typische LES-Schließung: τ^{sgs}_{ij} - (1/3)τ^{sgs}_{kk} δ_{ij} = -2 ν_t \\bar{S}_{ij}, mit \\bar{S}_{ij} = 1/2(∂\\bar{u}_i/∂x_j + ∂\\bar{u}_j/∂x_i).",
+  "In RANS werden häufig zusätzliche Transportgleichungen (k-ε, k-ω, RSM …) und Wandbehandlungen benötigt → insgesamt komplexer."
+]
+mistakes: [
+  "Behaupten, LES sei modellfrei (SGS muss geschlossen werden).",
+  "SGS-Spannung τ^{sgs}_{ij} mit Reynolds-Spannung \\overline{u'_i u'_j} gleichsetzen.",
+  "Ignorieren, dass in LES Numerik/Filterung (Δ) stark in die Modellierung eingeht (implicit LES)."
+]
+
+--- u14-q008 ---
+question: "Warum sind kleine Skalen eher isotrop, große Skalen sind es aber eher nicht?"
+blueprint: [
+  "Große Skalen werden direkt von Anisotropie-Quellen beeinflusst: Wände, mittlere Scherung, Krümmung/Rotation, Dichte-/Temperatur-Schichtung → inhomogen und anisotrop.",
+  "Bei kleineren Skalen dominiert die lokale, nichtlineare Wechselwirkung; der direkte Einfluss von Randbedingungen nimmt mit abnehmender Skala ab → lokale Isotropie (Kolmogorov-Hypothese) wird wahrscheinlicher.",
+  "Viskosität wirkt besonders auf kleinste Skalen und dämpft Richtungsunterschiede zusätzlich.",
+  "Daher sind viele SGS-Schließungen in LES isotrop/eddy-viscosity-basiert, während Großskalenstrukturen deutlich anisotrop sein können.",
+  "Einschränkung: nahe Wänden (sehr kleine Wandabstände) können auch kleine Skalen anisotrop bleiben → Wandmodelle/Dämpfung nötig."
+]
+mistakes: [
+  "Isotropie für alle Skalen behaupten.",
+  "Isotropie ausschließlich der Viskosität zuschreiben (auch Nichtlinearität/Skalenentkopplung wichtig).",
+  "Lokale Isotropie nahe der Wand unkritisch annehmen."
+]
+
+--- u14-q009 ---
+question: "Geben Sie ein Model für die turbulente Viskosität an."
+blueprint: [
+  "Eddy-Viscosity-Ansatz in LES: τ^{sgs}_{ij} - (1/3)τ^{sgs}_{kk} δ_{ij} = -2 ν_t \\bar{S}_{ij}.",
+  "Smagorinsky-Modell: ν_t = (C_s Δ)^2 |\\bar{S}|, mit |\\bar{S}| = √(2 \\bar{S}_{ij}\\bar{S}_{ij}) und Δ = (ΔxΔyΔz)^{1/3} (Filter-/Gitterweite).",
+  "Typische Konstante: C_s ≈ 0.17 (oft in ca. 0.1–0.2 variiert); alternativ „dynamic Smagorinsky“ bestimmt C_s lokal über Testfilter (Germano-Identität).",
+  "Nahe der Wand braucht man i. d. R. Dämpfung/Anisotropie (z. B. van-Driest-Dämpfung, WALE), da konstantes Smagorinsky oft zu starke Dämpfung erzeugt."
+]
+mistakes: [
+  "Δ falsch wählen/interpretieren (Filterweite nicht vom Netz entkoppelt).",
+  "Konstantes Smagorinsky bis an die Wand anwenden (überdämpft, falsche Wandnähe).",
+  "Isotropen Anteil von τ^{sgs} nicht abtrennen (wirkt sonst wie zusätzlicher Druckanteil)."
+]
+
+--- u14-q010 ---
+question: "Definieren Sie „Modellfehler“ und „numerischen Fehler“. Nennen Sie zwei Gründe für numerische Fehler. Nennen Sie 3 Gründe für Modellfehler."
+blueprint: [
+  "Numerischer Fehler: Differenz zwischen der exakten Lösung der *modellierten* PDEs und der berechneten diskreten Lösung (Diskretisierungs-, Iterations- und Rundungsfehler).",
+  "Modellfehler: Differenz zwischen der Realität (bzw. einer Referenzbeschreibung) und den *modellierten* Gleichungen/Schließungen (z. B. SGS-/Wandmodell, vereinfachte Physik).",
+  "Gründe für numerische Fehler (Beispiele): (1) räumliche Diskretisierung/Truncation (zu grobes Netz, niedrige Ordnung, numerische Diffusion/Dispersion), (2) zeitliche Diskretisierung (zu großes Δt, CFL), (3) nicht auskonvergierte Iterationen/Residuals, (4) schlechte Zellqualität (Skewness/Nichtorthogonalität).",
+  "Gründe für Modellfehler (Beispiele): (1) ungeeignetes SGS-/Wandmodell oder falsche Modellkonstanten, (2) Annahmen wie Scale-Separation/Universality verletzt, (3) fehlende/vereinfachte Physik (Kompressibilität, Wärmetransport, Mehrphasen, Chemie …), (4) falsche Randbedingungen/Inlet-Turbulenz, (5) ungenaue Materialdaten.",
+  "In LES koppeln sich Modell- und Numerikfehler häufig (implicit filtering) → deshalb Gitter-/Zeitschrittstudien und Modellvarianten vergleichen."
+]
+mistakes: [
+  "Modell- und Numerikfehler vermischen (alles als „Turbulenzmodell“-Problem deklarieren).",
+  "Nur Residuen betrachten und daraus „Fehler“ ableiten (Residuum ≠ Diskretisierungsfehler).",
+  "Bei LES ignorieren, dass Numerik als implizites SGS-Modell wirken kann."
+]
+
+--- u14-q011 ---
+question: "Was bedeutet „Kalibrierung“ eines Modells?"
+blueprint: [
+  "Kalibrierung (Tuning) bedeutet: Modellparameter/Koefizienten (und ggf. Funktionsformen) so anpassen, dass definierte Zielgrößen (QoI) mit Referenzdaten (DNS/Experimente) in einem Kalibrierdatensatz möglichst gut übereinstimmen.",
+  "Beispiele: Wahl von C_s im Smagorinsky-Modell, Dämpfungsfunktionen nahe der Wand, Relaxationszeiten in HRM/Phasenübergangsmodellen.",
+  "Kalibrierung ≠ Validierung: Validierung prüft die Vorhersagegüte an *unabhängigen* Fällen, die nicht zur Parametrierung genutzt wurden.",
+  "Gute Kalibrierung nutzt eine klare Zielfunktion (Fehlermaß), plausible Parameterintervalle und idealerweise eine Unsicherheitsabschätzung."
+]
+mistakes: [
+  "Kalibrierung und Validierung gleichsetzen (Overfitting-Risiko).",
+  "Parameter „so lange drehen“, bis ein Plot passt, ohne Zielfunktion/Unsicherheit.",
+  "Kalibrierung an einem Spezialfall durchführen und Universalität behaupten."
+]
+
+--- u14-q012 ---
+question: "Wie bestimmen Sie die Netzqualität/Konvergenz eines Netzes?"
+blueprint: [
+  "Netzqualität (Geometrie): Skewness/Nichtorthogonalität klein, positive Volumina, moderate Aspect Ratios (außer in Grenzschichten), glatte Zellgrößenübergänge, ausreichende Auflösung in kritischen Regionen (Wandnähe, Scherlagen, Rezirkulation).",
+  "Netzkonvergenz (Grid-Convergence): Relevante Zielgrößen (z. B. Druckverlust, Kräfte, Profile) auf mehreren systematisch verfeinerten Netzen vergleichen; Änderungen sollten mit Verfeinerung abnehmen (idealerweise monotone Konvergenz).",
+  "Optional: Richardson-Extrapolation/GCI, z. B. Fehlerabschätzung über φ_h, φ_{h/r}: ε ≈ (φ_h - φ_{h/r})/(r^p - 1) (p: beobachtete Ordnung, r: Verfeinerungsfaktor).",
+  "LES-spezifisch: Wandauflösung (y^+), Spektren E(k), Anteil modellierter Dissipation ε_sgs/(ε_res+ε_sgs) und Stabilität kohärenter Strukturen prüfen; zusätzlich Δt-Studie (CFL).",
+  "Für LES braucht man außerdem statistische Konvergenz: genügend lange Mittelungszeit/Ensemble, damit Mittelwerte/RMS stabil sind."
+]
+mistakes: [
+  "Konvergenz nur über Residuen eines einzigen Netzes beurteilen.",
+  "Globale Zellzahl erhöhen, aber kritische Regionen (Wand/Scherlage) nicht verfeinern.",
+  "Bei LES statistischen Fehler (zu kurze Mittelungszeit) mit Netzfehler verwechseln."
+]
+
+--- u14-q013 ---
+question: "Können Sie die kleinen, aber eindeutigen Unterschiede zwischen RANS und LES für stationäre Fälle nennen?"
+blueprint: [
+  "Auch bei statistisch stationären Strömungen ist LES zeitaufgelöst: sie liefert u(x,t) mit turbulenten Fluktuationen; stationäre Größen ergeben sich erst durch Zeit-/Ensemble-Mittelung der LES-Lösung.",
+  "RANS liefert direkt ein (meist) stationäres Mittel \\bar{u}(x) und modelliert die komplette turbulente Stresswirkung \\overline{u'_i u'_j}.",
+  "LES modelliert nur SGS und hat typischerweise weniger einstellbare Parameter; dadurch können Mittelwerte (und insbesondere RMS/Extrema) klein, aber systematisch von RANS abweichen.",
+  "LES beschreibt instationäre Effekte kohärenter Strukturen explizit (z. B. Scherlagen, Ablösung, Rezirkulation), während RANS diese in ein stationäres Modell „einmittelt“.",
+  "Vergleich ist nur sinnvoll als RANS-Mittelwert ↔ zeitgemitteltes LES-Ergebnis (nicht einzelne LES-Snapshots)."
+]
+mistakes: [
+  "Ein instantanes LES-Feld mit stationärem RANS vergleichen.",
+  "Erwarten, dass LES auf ein stationäres Feld „konvergiert“ (LES bleibt instationär).",
+  "LES-Mittelwerte aus zu kurzer Mittelungszeit ziehen (statistische Unsicherheit)."
+]
+
+--- u14-q014 ---
+question: "Wann können sie wichtig werden und die Lösung beeinflussen?"
+blueprint: [
+  "Wenn Großskalendynamik die Mittelwerte stark beeinflusst: starke Drallströmungen (swirl), große Rezirkulationszonen, Ablösung/Wiederanlagerung, freie Scherlagen.",
+  "Bei komplexen Geometrien (viele Kanten, Umlenkungen, Einbauten) entstehen kohärente Strukturen und Mehrfachstabilitäten; RANS kann dann „zu glatt“ oder in einem falschen Zustand landen.",
+  "Wenn nicht nur Mittelwerte, sondern Fluktuationen/Extrema relevant sind: Druckpulsationen, Lärm, Bauteilermüdung, Spitzenwärmeflüsse.",
+  "Wenn instationäre Effekte (z. B. intermittente Ablösung, große Wirbelpakete) rückkoppeln und das gemittelte Feld verändern.",
+  "Dann werden „kleine Unterschiede“ zwischen RANS und LES in Mittelwerten/Statistik signifikant für die Vorhersage."
+]
+mistakes: [
+  "Stationär rechnen, obwohl die Physik großskalig instationär ist (URANS/LES erforderlich).",
+  "LES-Abweichungen automatisch als „besser“ interpretieren ohne Validierung/Unsicherheitsanalyse.",
+  "Nicht zwischen statistischer Konvergenz und physikalischem Unterschied unterscheiden."
+]
+
+--- u14-q015 ---
+question: "Nennen Sie Beispiele, bei denen Zyklusvariationen wichtig werden?"
+blueprint: [
+  "Klassisches Beispiel: Zylinderinnenströmung im Verbrennungsmotor (in-cylinder engine flow) mit cycle-to-cycle variation – Turbulenz führt zu zyklischen Schwankungen von Strömung, Gemischbildung und Verbrennung.",
+  "Weitere Beispiele: thermo-akustische Verbrennungsschwingungen, pulsierende Jets, Pumpen/Kompressoren (Surge/Rotating Stall) – periodische Anregung mit chaotischer Modulation.",
+  "Turbomaschinen: Rotor-Stator-Interaktion, unsteady blade loading → Zyklusvariationen beeinflussen Spannungen/Ermüdung und Wirkungsgrad.",
+  "Bluff-body wake / vortex shedding: periodische Wirbelablösung mit Variationen über viele Perioden; relevant für Schwingungen und Lastspitzen.",
+  "LES kann solche Variationen und Extrema aus dem zeitaufgelösten Feld erfassen; stationäre RANS bildet sie i. d. R. nicht ab."
+]
+mistakes: [
+  "Zu wenige Zyklen simulieren → scheinbare Variationen sind Sampling-Artefakte.",
+  "Zyklusvariationen mit reiner numerischer Instabilität verwechseln.",
+  "Nur Mittelwerte betrachten, obwohl Extrema/RMS die Auslegung bestimmen."
+]
+
+
+========== UNIT u15 ==========
+
+--- u15-q010 ---
+question: "Was charakterisiert eine disperse Zweiphasen-Strömung? Nennen Sie Beispiele."
+blueprint: [
+  "Disperse Zweiphasenströmung: Eine Phase ist kontinuierliche Trägerphase (continuous/carrier phase), die andere Phase liegt als viele getrennte Elemente (Tropfen, Blasen, Partikel) vor – keine zusammenhängende, großskalige Grenzfläche.",
+  "Typisch ist ein kleiner Volumenbruch der dispersen Phase (Trägerphase dominiert, z. B. α_c ≳ 0.9, oft > 0.99) und eine charakteristische Tropfen-/Partikelgröße, die deutlich kleiner als die Strömungslängenskalen ist.",
+  "Interaktionen der dispersen Elemente können je nach Dichtegrad vernachlässigbar (dilute) oder dominant (Kollision/Koaleszenz/Breakup) sein.",
+  "Beispiele: Spray (Kraftstofftröpfchen in Luft), Aerosole/Staub in Gas, Sediment/Partikel in Wasser, Blasenströmung mit kleiner Gas‑Void‑Fraction, Wolkentröpfchen in Atmosphäre."
+]
+mistakes: [
+  "Stratifizierte/Slug‑Flows als „dispers“ bezeichnen (dort existieren zusammenhängende Phasenbereiche/Grenzflächen).",
+  "Volumenbruch‑Kriterium ignorieren (zu hohe α_d → nicht mehr disperse Annahme).",
+  "Disperse Phase automatisch als „dilute“ annehmen (Interaktionen können wichtig sein)."
+]
+
+--- u15-q011 ---
+question: "Was ist eine „verdünnte“ Strömung (dilute flow)? Was ist der Grenzwert des Volumenbruchs, der diese Strömung charakterisiert?"
+blueprint: [
+  "Eine verdünnte (dilute) disperse Strömung ist ein Regime, in dem der Volumenbruch der dispersen Phase so klein ist, dass Wechselwirkungen zwischen den dispersen Elementen (Kollision, Koaleszenz, Abschattung der Strömung, Wake‑Interaktion) vernachlässigbar sind.",
+  "Dann dominiert die Trägerphase klar, und die Kopplung ist häufig 1‑way oder 2‑way (abhängig von Massenbeladung), während 4‑way‑Effekte (Partikel‑Partikel‑Interaktion) klein bleiben.",
+  "Typischer Faustwert: α_d ≲ 10^{-2} (≈ 1%) als „sehr verdünnt“; häufig wird sogar α_d ≲ 10^{-3} (0.1%) als klar dilute angesehen – genaue Grenze ist anwendungsabhängig.",
+  "Im Kontext von Flüssigkeitströpfchen (Sprays) wird der „permissible liquid volume fraction“ daher oft im Bereich ≤ O(10^{-2}) angegeben."
+]
+mistakes: [
+  "„Dilute“ über Massenanteil statt über Volumenbruch definieren (Dichteverhältnis spielt große Rolle).",
+  "Bei α_d nahe der Grenze Partikel‑Partikel‑Interaktionen ignorieren (Kollision/Koaleszenz kann dann relevant werden).",
+  "Grenzwert als universell exakt darstellen (Regime‑ und Modellabhängigkeit unterschlagen)."
+]
+
+--- u15-q012 ---
+question: "Nennen Sie den Zusammenhang zwischen Anzahldichte, flüssigem Volumenbruch und Tropfendurchmesser."
+blueprint: [
+  "Anzahldichte n (number density) ist die Anzahl der Tropfen pro Volumen: n = N/V.",
+  "Für monodisperse, kugelförmige Tropfen mit Durchmesser d gilt Tropfenvolumen V_d = (π/6) d^3 (oder mit Radius r: V_d = (4/3)π r^3).",
+  "Der flüssige Volumenbruch ergibt sich dann zu α_l = n V_d = n (π/6) d^3 = n (4/3)π r^3.",
+  "Für eine Größenverteilung gilt allgemein: α_l = ∫ n(d) (π/6) d^3 \\, dd (Summe/Integral über alle Klassen)."
+]
+mistakes: [
+  "Radius und Durchmesser verwechseln (Faktor 8‑Fehler in d^3).",
+  "Massenanteil statt Volumenbruch verwenden.",
+  "Polydisperse Verteilungen wie monodispers behandeln, obwohl n(d) breit ist."
+]
+
+--- u15-q013 ---
+question: "Wie berechnen Sie den Pfad eines Partikels/Tropfens als Funktion der Zeit?"
+blueprint: [
+  "Im Lagrange‑Ansatz folgt die Trajektorie aus kinematischer Gleichung: d x_p/dt = u_p(t).",
+  "Die Partikelgeschwindigkeit u_p(t) erhält man aus der Bewegungsgleichung (Newton): m_p d u_p/dt = \\sum F (z. B. Drag, Gravitation, Lift …).",
+  "Häufige Schreibweise: d u_p/dt = (F_D + F_G + F_VM + F_L + …)/m_p; für kleine Partikel dominiert oft der Widerstand (Drag).",
+  "Das gekoppelte ODE‑System {d x_p/dt, d u_p/dt, ggf. dT_p/dt, dm_p/dt} wird numerisch integriert (z. B. explizit/implizit, Runge‑Kutta); Zeitschritt muss die Partikel‑Relaxationszeit ausreichend auflösen.",
+  "Wenn die Trägerphase Eulerisch gelöst wird, wird u(x,t) am Partikelort interpoliert: u_f,p = u(x_p,t) → Drag hängt von u_f,p - u_p ab."
+]
+mistakes: [
+  "Trajektorie nur mit d x_p/dt = u_f berechnen (u_p ≠ u_f bei Schlupf/Stokes‑Zahl ≳ 1).",
+  "Drag/Zeitschritt so wählen, dass die Partikel‑Relaxationszeit nicht aufgelöst wird → instabile/ungenau Ergebnisse.",
+  "Interpolation/Kopplung inkonsistent (Energie/Impuls nicht konservativ übertragen)."
+]
+
+--- u15-q014 ---
+question: "Welche Kräfte greifen an einem Tropfen in einer Zweiphasenströmung an?"
+blueprint: [
+  "Grundgleichung: m_p d u_p/dt = \\sum F (Newton). Die genaue Kraftbilanz hängt von Größe, Re_p, Dichteverhältnis und Strömung ab.",
+  "Typische Kräfte: Drag/Widerstandskraft (Reibung), Gewicht/Gravitation und Auftrieb, ggf. Druckgradientkraft.",
+  "Zusätzliche hydrodynamische Kräfte: virtuelle Masse (added mass), Basset‑History‑Kraft (zeitliche Änderung der Relativgeschwindigkeit), Liftkräfte (z. B. Saffman‑Lift bei Scherung), Magnus‑Kraft bei rotierenden Partikeln/Tropfen.",
+  "Bei deformierbaren Tropfen/Interfacen können zusätzlich Oberflächenspannungskräfte (Form-/Kapillardruck) und aerodynamisch induzierter Breakup relevant werden.",
+  "Faustregel: Für sehr kleine Partikel dominiert oft Drag; für größere kann Gravitation/Sedimentation wichtig werden; andere Kräfte sind fallabhängig."
+]
+mistakes: [
+  "Nur Drag berücksichtigen, obwohl Gravitation/Lift/added mass im Regime relevant ist.",
+  "Auftrieb und Gewicht doppelt zählen oder mit falschem Vorzeichen ansetzen.",
+  "Kraftmodelle außerhalb ihres Gültigkeitsbereichs anwenden (z. B. Stokes‑Drag bei hohem Re_p oder stark deformierten Tropfen)."
+]
+
