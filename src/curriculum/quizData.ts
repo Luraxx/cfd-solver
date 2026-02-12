@@ -11,6 +11,8 @@
  * All text/formulas support KaTeX notation inside $...$
  */
 
+import { vorlesungExtras } from './vorlesungQuestions';
+
 /* ── Base shared fields ───────────────────────────────────────── */
 interface QuizBase {
   id: string;
@@ -853,3 +855,12 @@ export const quizBank: Record<string, LessonQuiz> = {
     ],
   },
 };
+
+/* ═══════════════════════════════════════════════════════════════════
+   Merge vorlesung questions into existing lesson entries
+   ═══════════════════════════════════════════════════════════════════ */
+for (const [lid, qs] of Object.entries(vorlesungExtras)) {
+  if (quizBank[lid]) {
+    quizBank[lid].questions.push(...qs);
+  }
+}
