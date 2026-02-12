@@ -26,3 +26,6 @@ export type { EditableBlock } from './editableCode';
 
 export { presets1D } from './presets';
 export type { Preset1D } from './presets';
+
+export { solveHeat1D, initHeatGaussian, initHeatStep, heatMaxDt, fdStencils } from './fdm';
+export type { FDStencil, HeatConfig, HeatResult } from './fdm';

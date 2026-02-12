@@ -52,3 +52,35 @@ input[type="range"]::-webkit-slider-thumb {
   cursor: pointer;
 }
 
+/* Roadmap smooth scroll */
+.roadmap-scroll {
+  scroll-behavior: smooth;
+}
+.roadmap-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.roadmap-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.roadmap-scroll::-webkit-scrollbar-thumb {
+  background: #1f2937;
+  border-radius: 2px;
+}
+
+/* Page transition */
+.page-enter {
+  animation: pageIn 0.3s ease-out;
+}
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Line clamp utility */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
