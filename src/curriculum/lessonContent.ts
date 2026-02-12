@@ -754,4 +754,597 @@ export const lessonContents: Record<string, LessonContent> = {
       },
     ],
   },
+
+  // ═══════════════════════════════════════════════════════════════
+  // 9. LÖSUNGSALGORITHMEN
+  // ═══════════════════════════════════════════════════════════════
+
+  // ── 9.1 Lineare Gleichungssysteme ──────────────────────────────
+  'algo-linear-systems': {
+    lessonId: 'algo-linear-systems',
+    steps: [
+      {
+        title: 'Von der PDE zum linearen System',
+        text: 'Jede diskretisierte Gleichung (FDM oder FVM) ergibt pro Gitterpunkt/Zelle eine algebraische Gleichung. Bei N Zellen haben wir N Gleichungen mit N Unbekannten → ein lineares Gleichungssystem.',
+        formulas: [
+          'A \\vec{x} = \\vec{b}',
+          'a_P \\phi_P = \\sum_{nb} a_{nb} \\phi_{nb} + b_P'
+        ],
+        highlight: { type: 'key', text: 'Die Matrix A ist dünn besetzt (sparse): Jede Zeile hat nur so viele Nicht-Null-Einträge wie die Zelle Nachbarn hat (z.B. 5 in 2D, 7 in 3D).' },
+      },
+      {
+        title: 'Struktur der Matrix',
+        text: 'In 1D mit N Zellen ergibt sich eine **Tridiagonalmatrix** (Hauptdiagonale + zwei Nebendiagonalen). In 2D wird die Matrix bandförmig.\n\n• **Diagonaldominanz**: $|a_P| \\geq \\sum |a_{nb}|$ — wichtig für Konvergenz iterativer Löser\n• **Symmetrie**: Nur bei reiner Diffusion (ohne Konvektion)\n• **Positive Definitheit**: Nicht immer gegeben (Konvektion kann unsymmetrisch machen)',
+      },
+      {
+        title: 'Direkte vs. iterative Löser',
+        text: 'Man unterscheidet zwei Klassen:\n\n• **Direkte Löser** (LU, Cholesky): Exakte Lösung in endlich vielen Schritten. Problem: Speicherbedarf $O(N^2)$ bei 2D, $O(N^{7/3})$ bei 3D — bei Millionen Zellen unrealistisch.\n\n• **Iterative Löser** (Jacobi, Gauss-Seidel, CG, GMRES): Starten mit Schätzung, verbessern iterativ. Speicherbedarf $O(N)$ — skaliert!',
+        highlight: { type: 'tip', text: 'In praktischer CFD werden fast immer iterative Löser verwendet. Direkte Löser nur für kleine Systeme oder als Vorkonditionierer.' },
+      },
+    ],
+  },
+
+  // ── 9.2 Jacobi & Gauss-Seidel ─────────────────────────────────
+  'algo-iterative': {
+    lessonId: 'algo-iterative',
+    steps: [
+      {
+        title: 'Jacobi-Verfahren',
+        text: 'Die einfachste Idee: Stelle jede Gleichung nach der Diagonalunbekannten um und iteriere.',
+        formulas: [
+          'x_i^{(k+1)} = \\frac{1}{a_{ii}} \\left( b_i - \\sum_{j \\neq i} a_{ij} x_j^{(k)} \\right)'
+        ],
+        highlight: { type: 'key', text: 'Jacobi nutzt nur Werte aus der vorherigen Iteration → einfach parallelisierbar, aber langsame Konvergenz.' },
+      },
+      {
+        title: 'Gauss-Seidel-Verfahren',
+        text: 'Verbesserung: Nutze bereits aktualisierte Werte sofort im gleichen Sweep.',
+        formulas: [
+          'x_i^{(k+1)} = \\frac{1}{a_{ii}} \\left( b_i - \\sum_{j < i} a_{ij} x_j^{(k+1)} - \\sum_{j > i} a_{ij} x_j^{(k)} \\right)'
+        ],
+        highlight: { type: 'tip', text: 'Gauss-Seidel konvergiert typischerweise doppelt so schnell wie Jacobi, braucht aber weniger Parallelität.' },
+      },
+      {
+        title: 'Konvergenzverhalten',
+        text: 'Beide Verfahren konvergieren, wenn die Matrix **diagonaldominant** ist (bei CFD oft erfüllt). Das Residuum $r^{(k)} = b - A x^{(k)}$ muss gegen Null fallen.\n\n• **Hochfrequente Fehler** (benachbarte Zellen alternierend falsch) werden schnell gedämpft\n• **Niederfrequente Fehler** (großräumige Abweichungen) werden extrem langsam gedämpft → hier hilft Multigrid!',
+        highlight: { type: 'warning', text: 'In der Praxis sind reine Jacobi/GS zu langsam für große Probleme. Man nutzt sie als "Smoother" im Multigrid oder als Vorkonditionierer.' },
+      },
+      {
+        title: 'Interaktiv vergleichen',
+        text: 'In der Simulation lösen wir das Modellproblem $-\\nabla^2 u = f$ auf einem 1D-Gitter. Vergleiche Jacobi und Gauss-Seidel:\n\n• Wie viele Iterationen brauchen sie?\n• Wie sieht das Residuum über die Iterationen aus?\n• Was passiert bei mehr Gitterpunkten — wird es schlimmer?',
+      },
+    ],
+  },
+
+  // ── 9.3 Multigrid ─────────────────────────────────────────────
+  'algo-multigrid': {
+    lessonId: 'algo-multigrid',
+    steps: [
+      {
+        title: 'Das Problem niederfrequenter Fehler',
+        text: 'Jacobi und Gauss-Seidel glätten hochfrequente Fehler schnell, aber niederfrequente Fehler kaum. Ein Fehler mit Wellenlänge $\\lambda = L$ (Gebietsgröße) braucht $O(N^2)$ Iterationen!',
+        formulas: [
+          '\\text{Iterationen} \\sim O(N^2) \\text{ für klassische Relaxation}'
+        ],
+        highlight: { type: 'key', text: 'Die Idee von Multigrid: Was auf dem feinen Gitter niederfrequent ist, ist auf einem groben Gitter hochfrequent — und wird dort schnell geglättet!' },
+      },
+      {
+        title: 'V-Zyklus',
+        text: 'Der klassische Multigrid-Algorithmus:\n\n• **1. Glätten** auf dem feinen Gitter (wenige Jacobi/GS-Schritte)\n• **2. Restriktion**: Residuum auf gröberes Gitter übertragen\n• **3. Lösen/Glätten** auf dem groben Gitter (ggf. rekursiv)\n• **4. Prolongation**: Korrektur auf feines Gitter interpolieren\n• **5. Nachglätten** auf dem feinen Gitter',
+        formulas: [
+          '\\text{Fein} \\xrightarrow{\\text{Restriktion}} \\text{Grob} \\xrightarrow{\\text{Lösen}} \\text{Korrektur} \\xrightarrow{\\text{Prolongation}} \\text{Fein}'
+        ],
+      },
+      {
+        title: 'Optimale Komplexität',
+        text: 'Multigrid erreicht **optimale Komplexität** $O(N)$ — der Rechenaufwand wächst nur linear mit der Problemgröße! Das ist ein enormer Vorteil gegenüber direkten Lösern $O(N^{3/2})$ oder klassischen iterativen Methoden $O(N^2)$.',
+        highlight: { type: 'tip', text: 'Algebraisches Multigrid (AMG) funktioniert sogar auf unstrukturierten Gittern, ohne geometrische Gitterhierarchie.' },
+      },
+    ],
+  },
+
+  // ── 9.4 Unterrelaxation ────────────────────────────────────────
+  'algo-underrelaxation': {
+    lessonId: 'algo-underrelaxation',
+    steps: [
+      {
+        title: 'Warum Unterrelaxation?',
+        text: 'Bei nichtlinearen Problemen (Navier-Stokes) kann die volle Korrektur pro Iteration zu Instabilität führen. Unterrelaxation dämpft die Änderung.',
+        formulas: [
+          '\\phi^{\\text{new}} = \\phi^{\\text{old}} + \\alpha \\cdot (\\phi^* - \\phi^{\\text{old}})',
+          '0 < \\alpha < 1 \\quad (\\text{Unterrelaxation})',
+          '\\alpha = 1 \\quad (\\text{keine Relaxation})',
+          '\\alpha > 1 \\quad (\\text{Überrelaxation, z.B. SOR})'
+        ],
+      },
+      {
+        title: 'Typische Werte in CFD',
+        text: 'In SIMPLE-basierten Solvern:\n\n• **Geschwindigkeit**: $\\alpha_u = 0.7$\n• **Druck**: $\\alpha_p = 0.3$\n• **Turbulenz (k, ε)**: $\\alpha = 0.5 \\text{–} 0.7$\n\nDie Summe $\\alpha_u + \\alpha_p = 1$ ist eine oft empfohlene Faustregel.',
+        highlight: { type: 'key', text: 'Zu starke Unterrelaxation ($\\alpha \\ll 1$): sehr langsame Konvergenz. Zu schwache ($\\alpha \\to 1$): Instabilität. Es ist eine Kunst!' },
+      },
+      {
+        title: 'Residuenmonitoring',
+        text: 'In der Praxis überwacht man die **Residuen** aller Gleichungen über die Iterationen. Typische Konvergenzkriterien:\n\n• Residuum fällt um 3–5 Größenordnungen\n• Kräfte/Momente am Objekt konvergieren\n• Monitorpunkt-Werte werden stationär',
+        highlight: { type: 'tip', text: 'In OpenFOAM/Fluent werden die Anfangsresiduen und das finale Residuum jeder Gleichung pro Iteration ausgegeben.' },
+      },
+    ],
+  },
+
+  // ═══════════════════════════════════════════════════════════════
+  // 10. KOMPRESSIBLE STRÖMUNGEN
+  // ═══════════════════════════════════════════════════════════════
+
+  // ── 10.1 Euler-Gleichungen ─────────────────────────────────────
+  'comp-euler': {
+    lessonId: 'comp-euler',
+    steps: [
+      {
+        title: 'Von inkompressibel zu kompressibel',
+        text: 'In kompressiblen Strömungen ist die **Dichte nicht konstant** — sie ändert sich mit Druck und Temperatur. Die Mach-Zahl bestimmt, wie wichtig Kompressibilitätseffekte sind.',
+        formulas: [
+          'Ma = \\frac{|u|}{a}, \\quad a = \\sqrt{\\gamma \\frac{p}{\\rho}}',
+          'Ma < 0.3: \\text{ quasi-inkompressibel}',
+          'Ma > 1: \\text{ Überschall (Stoßwellen!)}'
+        ],
+      },
+      {
+        title: 'Die Euler-Gleichungen (1D)',
+        text: 'Reibungsfreie kompressible Strömung wird durch drei Erhaltungsgleichungen beschrieben:',
+        formulas: [
+          '\\frac{\\partial}{\\partial t} \\begin{pmatrix} \\rho \\\\ \\rho u \\\\ \\rho E \\end{pmatrix} + \\frac{\\partial}{\\partial x} \\begin{pmatrix} \\rho u \\\\ \\rho u^2 + p \\\\ u(\\rho E + p) \\end{pmatrix} = 0'
+        ],
+        highlight: { type: 'key', text: 'Drei Erhaltungssätze: Masse ($\\rho$), Impuls ($\\rho u$), Gesamtenergie ($\\rho E$). Geschlossen mit dem idealen Gasgesetz $p = (\\gamma - 1)(\\rho E - \\frac{1}{2}\\rho u^2)$.' },
+      },
+      {
+        title: 'Hyperbolischer Charakter',
+        text: 'Die 1D Euler-Gleichungen haben drei **Eigenwerte** (Wellengeschwindigkeiten):\n\n• $\\lambda_1 = u - a$ (linke akustische Welle)\n• $\\lambda_2 = u$ (Kontaktdiskontinuität / Entropiewelle)\n• $\\lambda_3 = u + a$ (rechte akustische Welle)\n\nInformation breitet sich mit endlicher Geschwindigkeit aus — das ist fundamental anders als bei inkompressiblen Gleichungen!',
+        highlight: { type: 'tip', text: 'Überprüfe die Normalschock-Relationen interaktiv: Gib Ma₁ ein und beobachte, wie sich Druck, Temperatur und Dichte über den Stoß ändern.' },
+      },
+      {
+        title: 'Normalschock-Relationen',
+        text: 'An einem senkrechten Stoß gelten die **Rankine-Hugoniot-Bedingungen**:',
+        formulas: [
+          '\\frac{p_2}{p_1} = 1 + \\frac{2\\gamma}{\\gamma+1}(Ma_1^2 - 1)',
+          '\\frac{\\rho_2}{\\rho_1} = \\frac{(\\gamma+1)Ma_1^2}{2 + (\\gamma-1)Ma_1^2}',
+          '\\frac{T_2}{T_1} = \\frac{p_2}{p_1} \\cdot \\frac{\\rho_1}{\\rho_2}'
+        ],
+      },
+    ],
+  },
+
+  // ── 10.2 Riemann-Problem ───────────────────────────────────────
+  'comp-riemann': {
+    lessonId: 'comp-riemann',
+    steps: [
+      {
+        title: 'Das Riemann-Problem',
+        text: 'Gegeben: Zwei konstante Zustände $(\\rho_L, u_L, p_L)$ und $(\\rho_R, u_R, p_R)$, getrennt bei $x = 0$. Was passiert zur Zeit $t > 0$?',
+        formulas: [
+          '\\vec{U}(x, 0) = \\begin{cases} \\vec{U}_L & x < 0 \\\\ \\vec{U}_R & x > 0 \\end{cases}'
+        ],
+        highlight: { type: 'key', text: 'Das Riemann-Problem ist der fundamentale Baustein für Godunov-artige Verfahren. Jede Zellfläche wird als lokales Riemann-Problem interpretiert.' },
+      },
+      {
+        title: 'Struktur der Lösung',
+        text: 'Die exakte Lösung besteht aus **drei Wellen**, die sich vom Anfangspunkt aus ausbreiten:\n\n• **Linke Welle** (Stoß ODER Verdünnungsfächer): bewegt sich nach links\n• **Kontaktdiskontinuität**: Dichtesprung bei gleichem Druck und Geschwindigkeit\n• **Rechte Welle** (Stoß ODER Verdünnungsfächer): bewegt sich nach rechts',
+        formulas: [
+          '\\text{Links: Stoß/Expansion} \\;|\\; \\text{Kontakt} \\;|\\; \\text{Rechts: Stoß/Expansion}'
+        ],
+      },
+      {
+        title: 'Verdünnungsfächer (Rarefaction)',
+        text: 'In einer Verdünnungswelle ändern sich die Größen **stetig** — die Zustandswerte "fächern" sich auf. In einem Stoß dagegen sind die Änderungen **diskontinuierlich** (Sprung in $\\rho$, $u$, $p$).',
+        highlight: { type: 'tip', text: 'Die Entropie steigt über einen Stoß an (irreversibel), bleibt aber in einer Verdünnungswelle konstant (isentrop).' },
+      },
+    ],
+  },
+
+  // ── 10.3 Godunov & Riemann-Löser ──────────────────────────────
+  'comp-godunov': {
+    lessonId: 'comp-godunov',
+    steps: [
+      {
+        title: 'Godunovs Methode',
+        text: 'Idee: An jeder Zellfläche liegt ein **lokales Riemann-Problem** vor (linker Zustand = Zelle links, rechter Zustand = Zelle rechts). Löse es und benutze die Lösung zur Flussberechnung.',
+        formulas: [
+          'F_{i+1/2} = F(\\vec{U}^*(0; \\vec{U}_i, \\vec{U}_{i+1}))'
+        ],
+        highlight: { type: 'key', text: 'Godunovs Schema ist die theoretische Basis aller modernen Shock-Capturing-Verfahren.' },
+      },
+      {
+        title: 'Approximative Riemann-Löser',
+        text: 'Die exakte Riemann-Lösung ist teuer (iterativ). Deshalb nutzt man Approximationen:\n\n• **Roe-Löser** (1981): Linearisierung um einen Roe-gemittelten Zustand. Genau, aber kann nicht-physikalische Stöße erzeugen (Entropie-Fix nötig)\n• **HLL** (Harten-Lax-van Leer, 1983): Zwei Wellen, dazwischen ein konstanter Zustand. Sehr robust, aber diffusiv an Kontaktflächen\n• **HLLC**: HLL mit "Kontaktwelle" (C = Contact). Standard in vielen Codes\n• **Rusanov/Lax-Friedrichs**: Einfachst möglich — maximale numerische Diffusion, aber extrem robust',
+      },
+      {
+        title: 'MUSCL-Rekonstruktion',
+        text: 'Godunovs Original ist 1. Ordnung (stückweise konstant). Für höhere Ordnung: **MUSCL** (Monotonic Upstream-centered Scheme for Conservation Laws).\n\n• Lineare oder parabolische Rekonstruktion innerhalb jeder Zelle\n• Slope-Limiter (minmod, van Leer) verhindern Oszillationen\n• Ergebnis: 2. Ordnung in Raum bei TVD-Eigenschaft',
+        highlight: { type: 'tip', text: 'OpenFOAM nutzt für kompressible Strömung standardmäßig Kurganov-Tadmor (zentrale Godunovsche Flüsse) mit MUSCL-Rekonstruktion.' },
+      },
+    ],
+  },
+
+  // ── 10.4 Sod Shock Tube ────────────────────────────────────────
+  'comp-shocktube': {
+    lessonId: 'comp-shocktube',
+    steps: [
+      {
+        title: 'Das Sod-Problem (1978)',
+        text: 'Der wichtigste 1D-Testfall für kompressible Löser. Eine Membran trennt zwei Gaszustände:',
+        formulas: [
+          '(\\rho_L, u_L, p_L) = (1.0, \\; 0, \\; 1.0)',
+          '(\\rho_R, u_R, p_R) = (0.125, \\; 0, \\; 0.1)',
+          '\\gamma = 1.4, \\quad t_{\\text{end}} = 0.2'
+        ],
+        highlight: { type: 'key', text: 'Die exakte Lösung enthält: eine nach links laufende Verdünnungswelle, eine Kontaktdiskontinuität und einen nach rechts laufenden Stoß.' },
+      },
+      {
+        title: 'Numerische Herausforderungen',
+        text: 'Jedes Schema hat typische Artefakte:\n\n• **Zu diffusiv**: Kontaktdiskontinuität verschmiert (UDS, Rusanov)\n• **Oszillationen**: Über- und Unterschwinger am Stoß (CDS, ohne Limiter)\n• **Expansion Shock**: Nicht-physikalischer Verdichtungsstoß (Roe ohne Entropie-Fix)\n• **Karbunkel-Instabilität**: Numerisches Artefakt bei starken Stößen in 2D',
+      },
+      {
+        title: 'Interaktive Simulation',
+        text: 'Der 1D-Euler-Löser verwendet das **Lax-Friedrichs-Schema** (robust, aber diffusiv). Beobachte:\n\n• Die drei Wellenstrukturen (Verdünnung, Kontakt, Stoß)\n• Wie die Gitterauflösung die Schärfe beeinflusst\n• Vergleiche mit der exakten Lösung',
+        highlight: { type: 'tip', text: 'Mehr Zellen → schärfere Diskontinuitäten. Aber selbst bei N=1000 bleibt die Kontaktdiskontinuität etwas verschmiert (Lax-Friedrichs ist 1. Ordnung).' },
+      },
+    ],
+  },
+
+  // ═══════════════════════════════════════════════════════════════
+  // 11. TURBULENZ
+  // ═══════════════════════════════════════════════════════════════
+
+  // ── 11.1 Was ist Turbulenz? ────────────────────────────────────
+  'turb-intro': {
+    lessonId: 'turb-intro',
+    steps: [
+      {
+        title: 'Laminare vs. turbulente Strömung',
+        text: 'Bei niedriger Reynolds-Zahl ist die Strömung **laminar** — geordnete Stromlinien. Ab einer kritischen Re-Zahl wird sie **turbulent** — chaotisch, dreidimensional, instationär.',
+        formulas: [
+          'Re = \\frac{UL}{\\nu}',
+          'Re_{\\text{krit, Rohr}} \\approx 2300'
+        ],
+        highlight: { type: 'key', text: 'Turbulenz ist kein Ein/Aus-Phänomen — es gibt einen Übergangsbereich (Transition), der extrem schwer vorherzusagen ist.' },
+      },
+      {
+        title: 'Eigenschaften von Turbulenz',
+        text: '• **Dreidimensional**: Auch wenn die mittlere Strömung 2D ist, sind die Schwankungen immer 3D\n• **Instationär**: Ständige zeitliche Fluktuation\n• **Dissipativer Prozess**: Kinetische Energie wird zu Wärme (durch Viskosität auf den kleinsten Skalen)\n• **Nichtlinear**: Keine Superposition — man kann nicht einfach Lösungen addieren\n• **Breites Skalenspektrum**: Von Gebietsgröße (Integralskala) bis zur winzigen Kolmogorov-Skala',
+      },
+      {
+        title: 'Energiekaskade',
+        text: 'Richardson (1922): *Big whirls have little whirls...* — Energie fließt von den großen Wirbeln zu den kleinen.',
+        formulas: [
+          '\\text{Produktion} \\xrightarrow{\\text{Kaskade}} \\text{Transfer} \\xrightarrow{\\text{Dissipation}} \\text{Wärme}',
+          'E(k) \\sim \\varepsilon^{2/3} k^{-5/3} \\quad \\text{(Kolmogorov -5/3 Gesetz)}'
+        ],
+        highlight: { type: 'key', text: 'Das Kolmogorov-Spektrum $E(k) \\propto k^{-5/3}$ gilt im Trägheitsbereich (Inertial Subrange) — zwischen Produktion und Dissipation.' },
+      },
+      {
+        title: 'Kolmogorov-Skalen',
+        text: 'Die kleinste Wirbel haben die Kolmogorov-Skala:',
+        formulas: [
+          '\\eta = \\left(\\frac{\\nu^3}{\\varepsilon}\\right)^{1/4} \\quad \\text{(Länge)}',
+          '\\tau_\\eta = \\left(\\frac{\\nu}{\\varepsilon}\\right)^{1/2} \\quad \\text{(Zeit)}',
+          '\\frac{L}{\\eta} \\sim Re^{3/4} \\quad \\text{(Skalenverhältnis)}'
+        ],
+        highlight: { type: 'tip', text: 'Bei Re = 10⁶: $L/\\eta \\approx 30000$ — man bräuchte 30000³ ≈ 2.7×10¹³ Gitterpunkte für DNS! Deshalb brauchen wir Turbulenzmodelle.' },
+      },
+    ],
+  },
+
+  // ── 11.2 RANS ──────────────────────────────────────────────────
+  'turb-rans': {
+    lessonId: 'turb-rans',
+    steps: [
+      {
+        title: 'Reynolds-Zerlegung',
+        text: 'Jede turbulente Größe wird in Mittelwert und Schwankung zerlegt.',
+        formulas: [
+          'u_i = \\bar{u}_i + u_i\'',
+          '\\overline{u_i\'} = 0, \\quad \\overline{\\bar{u}_i} = \\bar{u}_i'
+        ],
+      },
+      {
+        title: 'Reynolds-gemittelte Gleichungen (RANS)',
+        text: 'Einsetzen in die Navier-Stokes-Gleichungen und mitteln ergibt die RANS-Gleichungen:',
+        formulas: [
+          '\\rho \\bar{u}_j \\frac{\\partial \\bar{u}_i}{\\partial x_j} = -\\frac{\\partial \\bar{p}}{\\partial x_i} + \\frac{\\partial}{\\partial x_j}\\left[\\mu \\frac{\\partial \\bar{u}_i}{\\partial x_j} - \\rho \\overline{u_i\' u_j\'}\\right]'
+        ],
+        highlight: { type: 'key', text: 'Der Term $-\\rho \\overline{u_i\' u_j\'}$ ist der **Reynolds-Spannungstensor** — 6 neue Unbekannte, aber keine neuen Gleichungen → **Schließungsproblem**!' },
+      },
+      {
+        title: 'Das Schließungsproblem',
+        text: 'Um die RANS-Gleichungen zu lösen, muss man die Reynolds-Spannungen **modellieren**.\n\n**Boussinesq-Hypothese** (1877): Die Reynolds-Spannungen verhalten sich wie laminare Spannungen mit einer "turbulenten Viskosität".',
+        formulas: [
+          '-\\overline{u_i\' u_j\'} = \\nu_t \\left(\\frac{\\partial \\bar{u}_i}{\\partial x_j} + \\frac{\\partial \\bar{u}_j}{\\partial x_i}\\right) - \\frac{2}{3} k \\delta_{ij}'
+        ],
+        highlight: { type: 'warning', text: 'Die Boussinesq-Hypothese nimmt an, dass die Turbulenz isotrop ist und Reynolds-Spannungen mit der mittleren Deformation ausgerichtet sind. Das ist oft falsch!' },
+      },
+      {
+        title: 'Übersicht der RANS-Modelle',
+        text: '• **Algebraische Modelle** (Prandtl Mischungsweg): $\\nu_t = l_m^2 |\\partial u/\\partial y|$ — kein PDE, nur lokale Formel\n• **Spalart-Allmaras**: 1 Transportgleichung für $\\tilde{\\nu}$ — beliebt in der Luftfahrt\n• **k-ε**: 2 Gleichungen für k (turbulente kinetische Energie) und ε (Dissipation)\n• **k-ω**: 2 Gleichungen für k und ω (spezifische Dissipation) — besser an Wänden\n• **k-ω SST** (Menter): Hybridmodell k-ω/k-ε — der Industriestandard!\n• **RSM** (Reynolds Stress Model): 7 Gleichungen — genauer, aber teuer und instabil',
+      },
+    ],
+  },
+
+  // ── 11.3 k-ε Modell ───────────────────────────────────────────
+  'turb-ke': {
+    lessonId: 'turb-ke',
+    steps: [
+      {
+        title: 'Die zwei Gleichungen',
+        text: 'Das Standard k-ε-Modell (Launder & Spalding, 1974) löst Transportgleichungen für:',
+        formulas: [
+          'k = \\frac{1}{2} \\overline{u_i\' u_i\'} \\quad \\text{(turbulente kinetische Energie)}',
+          '\\varepsilon = \\nu \\overline{\\frac{\\partial u_i\'}{\\partial x_j} \\frac{\\partial u_i\'}{\\partial x_j}} \\quad \\text{(Dissipationsrate)}'
+        ],
+      },
+      {
+        title: 'Turbulente Viskosität',
+        text: 'Aus k und ε berechnet sich die turbulente Viskosität:',
+        formulas: [
+          '\\nu_t = C_\\mu \\frac{k^2}{\\varepsilon}',
+          'C_\\mu = 0.09'
+        ],
+        highlight: { type: 'key', text: 'Dimensionsanalyse: $[k^2/\\varepsilon] = (m^2/s^2)^2 / (m^2/s^3) = m^2/s$ — passt für eine Viskosität!' },
+      },
+      {
+        title: 'Transportgleichungen',
+        formulas: [
+          '\\frac{\\partial k}{\\partial t} + \\bar{u}_j \\frac{\\partial k}{\\partial x_j} = P_k - \\varepsilon + \\frac{\\partial}{\\partial x_j}\\left[\\left(\\nu + \\frac{\\nu_t}{\\sigma_k}\\right)\\frac{\\partial k}{\\partial x_j}\\right]',
+          '\\frac{\\partial \\varepsilon}{\\partial t} + \\bar{u}_j \\frac{\\partial \\varepsilon}{\\partial x_j} = C_1 \\frac{\\varepsilon}{k} P_k - C_2 \\frac{\\varepsilon^2}{k} + \\frac{\\partial}{\\partial x_j}\\left[\\left(\\nu + \\frac{\\nu_t}{\\sigma_\\varepsilon}\\right)\\frac{\\partial \\varepsilon}{\\partial x_j}\\right]'
+        ],
+        text: 'Produktion $P_k = \\nu_t |\\bar{S}|^2$. Standardkonstanten: $C_1 = 1.44$, $C_2 = 1.92$, $\\sigma_k = 1.0$, $\\sigma_\\varepsilon = 1.3$.',
+      },
+      {
+        title: 'Stärken und Schwächen',
+        text: '**Stärken**: Einfach, robust, gut für angehängte Grenzschichten und freie Scherschichten.\n\n**Schwächen**:\n• Überschätzt k an Staupunkten (Stagnationsanomalie)\n• Versagt bei starker Stromlinienkrümmung und Rotation\n• ε ist an der Wand singulär → Wandfunktionen nötig\n• Schlechte Vorhersage für Ablösung',
+        highlight: { type: 'warning', text: 'In der Industrie wird das Standard k-ε kaum noch allein verwendet. k-ω SST oder Realizable k-ε sind die bessere Wahl.' },
+      },
+    ],
+  },
+
+  // ── 11.4 k-ω SST ──────────────────────────────────────────────
+  'turb-kw-sst': {
+    lessonId: 'turb-kw-sst',
+    steps: [
+      {
+        title: 'k-ω Modell (Wilcox)',
+        text: 'Statt ε nutzt Wilcox die **spezifische Dissipationsrate** $\\omega = \\varepsilon / (C_\\mu k)$.',
+        formulas: [
+          '\\nu_t = \\frac{k}{\\omega}',
+          '\\omega \\to \\text{endlich an der Wand} \\quad (\\varepsilon \\to \\infty!)'
+        ],
+        highlight: { type: 'key', text: 'Vorteil von k-ω: Direkte Integration bis zur Wand möglich, ohne spezielle Wandfunktionen.' },
+      },
+      {
+        title: 'Die Schwäche: Fernfeldempfindlichkeit',
+        text: 'Das reine k-ω-Modell ist empfindlich gegenüber dem ω-Wert in der freien Anströmung (Fernfeldwerte). Das k-ε-Modell hat dieses Problem nicht.',
+        highlight: { type: 'warning', text: 'Deshalb die Idee von Menter: k-ω nahe der Wand, k-ε im Fernfeld → das Beste aus beiden Welten!' },
+      },
+      {
+        title: 'SST = Shear Stress Transport (Menter 1994)',
+        text: 'Menters SST-Modell blendet zwischen k-ω (Wand) und k-ε (Fernfeld) mittels einer **Blending-Funktion** $F_1$ um.',
+        formulas: [
+          '\\phi = F_1 \\cdot \\phi_{k\\omega} + (1 - F_1) \\cdot \\phi_{k\\varepsilon}',
+          'F_1 \\to 1 \\text{ (nahe Wand)}, \\quad F_1 \\to 0 \\text{ (fern)}'
+        ],
+        highlight: { type: 'key', text: 'Der "SST"-Teil limitiert zusätzlich die Schubspannung in adversen Druckgradienten — entscheidend für Ablösungsvorhersage.' },
+      },
+      {
+        title: 'Industriestandard',
+        text: 'k-ω SST ist heute der am häufigsten verwendete RANS-Modell in der Industrie:\n\n• Gute Vorhersage für angehängte und abgelöste Grenzschichten\n• Robuste Wandbehandlung\n• Implementiert in jedem kommerziellen CFD-Code\n• Standardmodell in OpenFOAM',
+        highlight: { type: 'tip', text: 'Wenn du unsicher bist, welches RANS-Modell: Nimm k-ω SST. Es ist für die meisten Anwendungen die beste Wahl.' },
+      },
+    ],
+  },
+
+  // ── 11.5 LES ───────────────────────────────────────────────────
+  'turb-les': {
+    lessonId: 'turb-les',
+    steps: [
+      {
+        title: 'Idee der Grobstruktursimulation',
+        text: 'LES (Large Eddy Simulation) löst die **gefilterten** Navier-Stokes-Gleichungen: Strukturen größer als die Filterweite $\\Delta$ werden direkt berechnet, kleinere modelliert.',
+        formulas: [
+          '\\bar{\\phi}(\\vec{x}) = \\int G(\\vec{x} - \\vec{x}\', \\Delta) \\phi(\\vec{x}\') d\\vec{x}\''
+        ],
+        highlight: { type: 'key', text: 'In der Praxis ist die Filterweite = Gittergröße. Alles was das Gitter auflösen kann, wird berechnet.' },
+      },
+      {
+        title: 'Subgrid-Scale (SGS) Modelle',
+        text: '• **Smagorinsky** (1963): $\\nu_{sgs} = (C_S \\Delta)^2 |\\bar{S}|$. Einfach, aber zu dissipativ an Wänden\n• **Dynamisches Smagorinsky** (Germano, 1991): $C_S$ wird lokal berechnet — viel bessere Ergebnisse\n• **WALE** (Wall-Adapting Local Eddy-viscosity): Besseres Wandverhalten als Standard-Smagorinsky\n• **σ-Modell**: Neuerer Ansatz mit Eigenwerten des Geschwindigkeitsgradienten',
+        formulas: [
+          '\\nu_{sgs} = (C_S \\Delta)^2 |\\bar{S}|, \\quad C_S \\approx 0.1 \\text{–} 0.2'
+        ],
+      },
+      {
+        title: 'Rechenaufwand',
+        text: 'LES ist wesentlich teurer als RANS:\n\n• **Gitter**: Muss fein genug sein, um ~80% der turbulenten Energie aufzulösen. An Wänden: $\\Delta x^+ \\sim 50$, $\\Delta y^+ \\sim 1$, $\\Delta z^+ \\sim 15$\n• **Instationär**: Zeitschritte $\\Delta t \\sim \\Delta x / U$, viele Durchflusszeiten für Statistik\n• **3D**: Immer dreidimensional (Turbulenz ist 3D!)',
+        formulas: [
+          'N_{\\text{LES}} \\sim Re^{13/7} \\quad \\text{(Gitterpunkte)}',
+          'N_{\\text{DNS}} \\sim Re^{9/4} \\quad \\text{(zum Vergleich)}'
+        ],
+        highlight: { type: 'warning', text: 'LES an Wänden bei hohem Re ist extrem teuer. Deshalb: Hybrid-Methoden wie DES (Detached Eddy Simulation) = RANS an der Wand + LES außerhalb.' },
+      },
+    ],
+  },
+
+  // ── 11.6 DNS ───────────────────────────────────────────────────
+  'turb-dns': {
+    lessonId: 'turb-dns',
+    steps: [
+      {
+        title: 'Direkte Numerische Simulation',
+        text: 'DNS löst die Navier-Stokes-Gleichungen **ohne jedes Turbulenzmodell**. Alle Skalen — von der Integralskala bis zur Kolmogorov-Skala — werden direkt aufgelöst.',
+        formulas: [
+          'N_{\\text{3D}} \\sim \\left(\\frac{L}{\\eta}\\right)^3 \\sim Re^{9/4}'
+        ],
+        highlight: { type: 'key', text: 'DNS gibt die "exakte" Lösung (nur numerische Fehler, kein Modellfehler). Aber der Rechenaufwand wächst mit Re^{9/4} — exponentiell teuer!' },
+      },
+      {
+        title: 'Aktuelle Grenzen',
+        text: 'Stand 2024: DNS ist möglich bis ca. $Re_\\tau \\approx 10000$ (Kanalströmung) auf den größten Supercomputern.\n\n• **Re = 100**: Einige tausend Gitterpunkte — auf dem Laptop\n• **Re = 10.000**: ~$10^{10}$ Gitterpunkte — Supercomputer\n• **Re = $10^6$** (Flugzeug): ~$10^{17}$ Punkte — unmöglich (noch für Jahrzehnte)',
+      },
+      {
+        title: 'Wozu DNS?',
+        text: 'DNS wird nicht für industrielle Probleme verwendet, sondern:\n\n• Zum **Verständnis** der Turbulenzphysik\n• Als **Referenzdaten** zur Validierung von RANS/LES-Modellen\n• Zur Entwicklung neuer Modelle (z.B. ML-basierte Turbulenzmodelle)',
+        highlight: { type: 'tip', text: 'Berühmte DNS-Datensätze: Moser et al. (1999) Kanalströmung, Jiménez & Moin (1991) Grenzschicht.' },
+      },
+    ],
+  },
+
+  // ── 11.7 Wandbehandlung ────────────────────────────────────────
+  'turb-wall': {
+    lessonId: 'turb-wall',
+    steps: [
+      {
+        title: 'Wandgrenzschicht-Struktur',
+        text: 'Nahe einer Wand bildet sich eine dünne Grenzschicht mit charakteristischer Struktur. Die dimensionslosen Wandvariablen sind:',
+        formulas: [
+          'u_\\tau = \\sqrt{\\frac{\\tau_w}{\\rho}} \\quad \\text{(Schubspannungsgeschwindigkeit)}',
+          'y^+ = \\frac{y \\cdot u_\\tau}{\\nu}, \\quad u^+ = \\frac{\\bar{u}}{u_\\tau}'
+        ],
+      },
+      {
+        title: 'Die drei Schichten',
+        text: '• **Viskose Unterschicht** ($y^+ < 5$): $u^+ = y^+$ — Viskosität dominiert\n• **Pufferschicht** ($5 < y^+ < 30$): Übergangsbereich\n• **Log-Schicht** ($y^+ > 30$): $u^+ = \\frac{1}{\\kappa} \\ln(y^+) + B$ — Turbulenz dominiert',
+        formulas: [
+          'u^+ = \\frac{1}{\\kappa} \\ln(y^+) + B, \\quad \\kappa \\approx 0.41, \\; B \\approx 5.2'
+        ],
+        highlight: { type: 'key', text: 'Das logarithmische Wandgesetz ist universal — es gilt für alle turbulenten Wandgrenzschichten (bei Gleichgewichts-Turbulenz).' },
+      },
+      {
+        title: 'Wandfunktionen vs. Wandauflösung',
+        text: '**Wandauflösung** ($y^+ \\leq 1$): Das Gitter löst die viskose Unterschicht auf. Möglich mit k-ω Modellen.\n\n**Wandfunktionen** ($30 < y^+ < 300$): Die erste Zelle liegt in der Log-Schicht. Die Wandschubspannung wird analytisch berechnet. Nötig für k-ε.',
+        highlight: { type: 'tip', text: 'In der Simulation kannst du das Log-Gesetz-Profil einer turbulenten Kanalströmung sehen und mit verschiedenen $y^+$-Werten spielen.' },
+      },
+    ],
+  },
+
+  // ═══════════════════════════════════════════════════════════════
+  // 12. ZWEIPHASENSTRÖMUNGEN
+  // ═══════════════════════════════════════════════════════════════
+
+  // ── 12.1 Einführung ────────────────────────────────────────────
+  'twophase-intro': {
+    lessonId: 'twophase-intro',
+    steps: [
+      {
+        title: 'Was sind Zweiphasenströmungen?',
+        text: 'Strömungen mit zwei (oder mehr) gleichzeitig vorhandenen Phasen:\n\n• **Gas-Flüssigkeit**: Blasen in Wasser, Wellen, Spray\n• **Flüssigkeit-Flüssigkeit**: Öl/Wasser-Emulsion\n• **Gas-Feststoff**: Wirbelschicht, pneumatischer Transport\n• **Flüssigkeit-Feststoff**: Sedimenttransport, Schlammströmung',
+        highlight: { type: 'key', text: 'Die Schwierigkeit: Die Phasengrenzfläche bewegt sich, verformt sich und kann aufbrechen/verschmelzen — das erfordert spezielle numerische Methoden.' },
+      },
+      {
+        title: 'Euler-Euler vs. Euler-Lagrange',
+        text: '**Euler-Euler**: Beide Phasen als Kontinua auf dem gleichen Gitter. Jede Phase hat eigene Erhaltungsgleichungen + Austauschterme.\n\n**Euler-Lagrange**: Kontinuierliche Phase (Euler) + diskrete Partikel/Tropfen/Blasen (Lagrange). Jedes Partikel wird einzeln verfolgt.',
+        formulas: [
+          '\\text{Euler-Euler: } \\alpha_1 + \\alpha_2 = 1 \\quad (\\text{Volumenfüllfaktoren})',
+          '\\text{Euler-Lagrange: } m_p \\frac{d\\vec{v}_p}{dt} = \\vec{F}_D + \\vec{F}_G + ... \\quad (\\text{pro Partikel})'
+        ],
+      },
+      {
+        title: 'Interface-Capturing vs. Interface-Tracking',
+        text: '**Interface-Tracking** (explizit): Gitter folgt der Grenzfläche. Genau, aber schwer bei Topologieänderungen.\n\n**Interface-Capturing** (implizit): Grenzfläche wird durch ein Feld auf dem festen Gitter dargestellt (VOF, Level-Set). Robust bei Aufbrechen/Verschmelzen.',
+        highlight: { type: 'tip', text: 'In der Praxis dominiert Interface-Capturing (VOF in OpenFOAM, Fluent). Es kann automatisch mit Topologieänderungen umgehen.' },
+      },
+    ],
+  },
+
+  // ── 12.2 VOF ───────────────────────────────────────────────────
+  'twophase-vof': {
+    lessonId: 'twophase-vof',
+    steps: [
+      {
+        title: 'Volume of Fluid',
+        text: 'Die VOF-Methode (Hirt & Nichols, 1981) definiert einen **Volumenfüllfaktor** α:',
+        formulas: [
+          '\\alpha = \\begin{cases} 0 & \\text{Phase 1 (z.B. Gas)} \\\\ 1 & \\text{Phase 2 (z.B. Flüssigkeit)} \\\\ 0 < \\alpha < 1 & \\text{Grenzflächenzelle} \\end{cases}'
+        ],
+        highlight: { type: 'key', text: 'α ist eine konservierte Größe — VOF erhält die Masse exakt (im Gegensatz zu Level-Set).' },
+      },
+      {
+        title: 'Transport von α',
+        text: 'α wird mit der Strömung advektiert:',
+        formulas: [
+          '\\frac{\\partial \\alpha}{\\partial t} + \\nabla \\cdot (\\alpha \\vec{u}) = 0'
+        ],
+        highlight: { type: 'warning', text: 'Problem: Normales UDS/CDS verschmiert die scharfe Grenzfläche über viele Zellen. Man braucht spezielle Interface-Kompressions-Schemata!' },
+      },
+      {
+        title: 'Interface-Rekonstruktion (PLIC)',
+        text: '**PLIC** (Piecewise Linear Interface Calculation): In jeder Grenzflächenzelle wird die Grenzfläche als ebene Fläche rekonstruiert.\n\n1. Berechne den Normalenvektor $\\vec{n}$ aus dem α-Gradient\n2. Bestimme die Position der Ebene so, dass der α-Wert exakt eingehalten wird\n3. Berechne geometrische Flüsse durch die Zellflächen',
+        highlight: { type: 'tip', text: 'In der 1D-Simulation siehst du, wie numerische Diffusion die Grenzfläche verschmiert und was passiert, wenn man die Auflösung erhöht.' },
+      },
+      {
+        title: 'Fluideigenschaften',
+        text: 'In der gesamten Domain werden Dichte und Viskosität als Funktion von α berechnet:',
+        formulas: [
+          '\\rho = \\alpha \\rho_2 + (1 - \\alpha) \\rho_1',
+          '\\mu = \\alpha \\mu_2 + (1 - \\alpha) \\mu_1'
+        ],
+      },
+    ],
+  },
+
+  // ── 12.3 Level-Set ─────────────────────────────────────────────
+  'twophase-levelset': {
+    lessonId: 'twophase-levelset',
+    steps: [
+      {
+        title: 'Die Level-Set-Funktion',
+        text: 'Statt α nutzt die Level-Set-Methode eine **vorzeichenbehaftete Abstandsfunktion** φ:',
+        formulas: [
+          '\\phi(\\vec{x}) = \\begin{cases} < 0 & \\text{Phase 1} \\\\ = 0 & \\text{Grenzfläche} \\\\ > 0 & \\text{Phase 2} \\end{cases}',
+          '|\\nabla \\phi| = 1 \\quad \\text{(Abstandseigenschaft)}'
+        ],
+        highlight: { type: 'key', text: 'Vorteil: Normalenvektor $\\vec{n} = \\nabla \\phi / |\\nabla \\phi|$ und Krümmung $\\kappa = \\nabla \\cdot \\vec{n}$ sind direkt aus φ berechenbar — wichtig für Oberflächenspannung!' },
+      },
+      {
+        title: 'Transport und Reinitialisierung',
+        text: 'φ wird advektiert:',
+        formulas: [
+          '\\frac{\\partial \\phi}{\\partial t} + \\vec{u} \\cdot \\nabla \\phi = 0'
+        ],
+        highlight: { type: 'warning', text: 'Problem: Nach einigen Zeitschritten ist $|\\nabla \\phi| \\neq 1$ → man muss regelmäßig **reinitialisieren** (eine Hamilton-Jacobi-Gleichung lösen).' },
+      },
+      {
+        title: 'Massenerhaltungsproblem',
+        text: 'Da φ keine konservierte Größe ist, kann sich die Masse unphysikalisch ändern. Kleine Strukturen (z.B. dünne Filamente) können verschwinden.\n\nLösung: **CLSVOF** (Coupled Level-Set / VOF) — kombiniert die Massenerhaltung von VOF mit der genauen Geometrie von Level-Set.',
+      },
+    ],
+  },
+
+  // ── 12.4 Oberflächenspannung ───────────────────────────────────
+  'twophase-surface-tension': {
+    lessonId: 'twophase-surface-tension',
+    steps: [
+      {
+        title: 'Young-Laplace-Gleichung',
+        text: 'An einer gekrümmten Grenzfläche bewirkt die Oberflächenspannung $\\sigma$ einen Drucksprung:',
+        formulas: [
+          '\\Delta p = p_{\\text{innen}} - p_{\\text{außen}} = \\sigma \\kappa',
+          '\\kappa = \\nabla \\cdot \\hat{n} = \\frac{1}{R_1} + \\frac{1}{R_2} \\quad \\text{(Krümmung)}'
+        ],
+        highlight: { type: 'key', text: 'Der Drucksprung treibt z.B. Kapillarwirkung: $\\sigma_{Wasser} \\approx 0.072$ N/m erzeugt in einem 1-mm-Röhrchen ΔP ≈ 288 Pa.' },
+      },
+      {
+        title: 'CSF-Methode (Continuum Surface Force)',
+        text: 'Brackbill et al. (1992): Die Oberflächenspannung wird als **Volumenkraft** in den Impulstermen modelliert:',
+        formulas: [
+          '\\vec{F}_{\\sigma} = \\sigma \\kappa \\nabla \\alpha \\quad \\text{oder} \\quad \\vec{F}_{\\sigma} = \\sigma \\kappa \\delta(\\phi) \\nabla \\phi'
+        ],
+        highlight: { type: 'tip', text: 'Der CSF-Ansatz ist einfach zu implementieren, aber erzeugt parasitäre Ströme (spurious currents) an glatten Grenzflächen!' },
+      },
+      {
+        title: 'Kapillarzahl',
+        text: 'Die Kapillarzahl vergleicht viskose mit Oberflächenspannungskräften:',
+        formulas: [
+          'Ca = \\frac{\\mu U}{\\sigma}',
+          'Ca \\ll 1: \\text{ Oberflächenspannung dominiert (Tropfenform bleibt rund)}',
+          'Ca \\gg 1: \\text{ Viskose Kräfte verformen den Tropfen}'
+        ],
+      },
+    ],
+  },
 };

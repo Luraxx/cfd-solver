@@ -140,6 +140,31 @@ const paths: Record<string, React.ReactNode> = {
     <path d="M7.5 7.5L13 13M11 11l2-2M13 13l1-1" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
   </>),
 
+  // ── New chapter icons ──────────────────────────────────
+  'cpu': (<>
+    <rect x="3" y="3" width="10" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.3" fill="none" />
+    <path d="M6 1v2M10 1v2M6 13v2M10 13v2M1 6h2M1 10h2M13 6h2M13 10h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+    <rect x="5.5" y="5.5" width="5" height="5" rx="0.5" stroke="currentColor" strokeWidth="0.8" fill="none" opacity="0.6" />
+  </>),
+  'layers': (<>
+    <path d="M8 2l6 3-6 3-6-3 6-3z" stroke="currentColor" strokeWidth="1.3" fill="none" strokeLinejoin="round" />
+    <path d="M2 8l6 3 6-3" stroke="currentColor" strokeWidth="1.2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M2 11l6 3 6-3" stroke="currentColor" strokeWidth="1.2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+  </>),
+  'wind': (<>
+    <path d="M2 6h7a2 2 0 100-4" stroke="currentColor" strokeWidth="1.3" fill="none" strokeLinecap="round" />
+    <path d="M2 10h9a2 2 0 110 4" stroke="currentColor" strokeWidth="1.3" fill="none" strokeLinecap="round" />
+    <path d="M2 8h4" stroke="currentColor" strokeWidth="1.3" fill="none" strokeLinecap="round" />
+  </>),
+  'droplet': (
+    <path d="M8 2c-3 4-5 6-5 9a5 5 0 0010 0c0-3-2-5-5-9z" stroke="currentColor" strokeWidth="1.3" fill="none" strokeLinejoin="round" />
+  ),
+  'target': (<>
+    <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.3" fill="none" />
+    <circle cx="8" cy="8" r="3.5" stroke="currentColor" strokeWidth="1" fill="none" opacity="0.6" />
+    <circle cx="8" cy="8" r="1" fill="currentColor" />
+  </>),
+
   // ── Simulation / placeholder icons ───────────────────
   'construction': (<>
     <path d="M2 14l5-5M14 14l-5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />

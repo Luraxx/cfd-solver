@@ -31,7 +31,13 @@ export type SimMode =
   | 'stability-cfl'
   | 'stability-peclet'
   | '2d-scalar'
-  | '2d-navier-stokes';
+  | '2d-navier-stokes'
+  | 'algo-iterative'
+  | 'comp-sod-tube'
+  | 'comp-normal-shock'
+  | 'turb-energy-spectrum'
+  | 'turb-channel-loglaw'
+  | 'twophase-vof-1d';
 
 // ── The full curriculum tree ───────────────────────────────────────
 
@@ -409,6 +415,256 @@ export const curriculum: LessonNode = {
           description: 'Der Klassiker: Strömung in einem Hohlraum mit bewegtem Deckel.',
           type: 'lesson',
           simMode: '2d-navier-stokes',
+          available: true,
+        },
+      ],
+    },
+
+    // ═══════════════════════════════════════════════════════════════
+    // 9. LÖSUNGSALGORITHMEN
+    // ═══════════════════════════════════════════════════════════════
+    {
+      id: 'algorithms',
+      title: 'Lösungsalgorithmen',
+      shortTitle: 'Algorithmen',
+      icon: 'cpu',
+      description: 'Lineare Gleichungssysteme, iterative Löser, Multigrid und Unterrelaxation.',
+      type: 'category',
+      available: true,
+      children: [
+        {
+          id: 'algo-linear-systems',
+          title: 'Lineare Gleichungssysteme in CFD',
+          shortTitle: 'Lin. Systeme',
+          icon: 'grid-square',
+          description: 'Wie aus diskretisierten Gleichungen das System Ax = b entsteht.',
+          type: 'lesson',
+          simMode: 'none',
+          available: true,
+        },
+        {
+          id: 'algo-iterative',
+          title: 'Jacobi & Gauss-Seidel',
+          shortTitle: 'Jacobi/GS',
+          icon: 'repeat',
+          description: 'Die einfachsten iterativen Löser: Jacobi und Gauss-Seidel. Konvergenzvergleich.',
+          type: 'lesson',
+          simMode: 'algo-iterative',
+          available: true,
+        },
+        {
+          id: 'algo-multigrid',
+          title: 'Multigrid-Methode',
+          shortTitle: 'Multigrid',
+          icon: 'layers',
+          description: 'Warum ist Multigrid so schnell? V-Zyklus, Restriktion, Prolongation.',
+          type: 'lesson',
+          simMode: 'none',
+          available: true,
+        },
+        {
+          id: 'algo-underrelaxation',
+          title: 'Unterrelaxation & Konvergenz',
+          shortTitle: 'Relaxation',
+          icon: 'trending-down',
+          description: 'Unterrelaxation zur Stabilisierung, Residuenmonitoring, Konvergenzkriterien.',
+          type: 'lesson',
+          simMode: 'none',
+          available: true,
+        },
+      ],
+    },
+
+    // ═══════════════════════════════════════════════════════════════
+    // 10. KOMPRESSIBLE STRÖMUNGEN
+    // ═══════════════════════════════════════════════════════════════
+    {
+      id: 'compressible',
+      title: 'Kompressible Strömungen',
+      shortTitle: 'Kompressibel',
+      icon: 'zap',
+      description: 'Euler-Gleichungen, Mach-Zahl, Stoßwellen, Riemann-Löser.',
+      type: 'category',
+      available: true,
+      children: [
+        {
+          id: 'comp-euler',
+          title: 'Euler-Gleichungen',
+          shortTitle: 'Euler',
+          icon: 'scroll',
+          description: 'Das hyperbole Erhaltungssystem: Masse, Impuls, Energie ohne Viskosität.',
+          type: 'lesson',
+          simMode: 'comp-normal-shock',
+          available: true,
+        },
+        {
+          id: 'comp-riemann',
+          title: 'Riemann-Problem',
+          shortTitle: 'Riemann',
+          icon: 'arrows-h',
+          description: 'Das fundamentale Baustein: Zwei Zustände, eine Diskontinuität.',
+          type: 'lesson',
+          simMode: 'none',
+          available: true,
+        },
+        {
+          id: 'comp-godunov',
+          title: 'Godunov & Riemann-Löser',
+          shortTitle: 'Godunov',
+          icon: 'shield',
+          description: 'Godunovs Methode, Roe-Löser, HLL/HLLC — Flussberechnung an Zellflächen.',
+          type: 'lesson',
+          simMode: 'none',
+          available: true,
+        },
+        {
+          id: 'comp-shocktube',
+          title: 'Sod Shock Tube',
+          shortTitle: 'Shock Tube',
+          icon: 'explosion',
+          description: 'Der berühmte Testfall: Membranbruch in einem Rohr mit Druckunterschied.',
+          type: 'lesson',
+          simMode: 'comp-sod-tube',
+          available: true,
+        },
+      ],
+    },
+
+    // ═══════════════════════════════════════════════════════════════
+    // 11. TURBULENZ
+    // ═══════════════════════════════════════════════════════════════
+    {
+      id: 'turbulence',
+      title: 'Turbulenzmodellierung',
+      shortTitle: 'Turbulenz',
+      icon: 'wind',
+      description: 'Von RANS über LES bis DNS — wie modelliert man Turbulenz?',
+      type: 'category',
+      available: true,
+      children: [
+        {
+          id: 'turb-intro',
+          title: 'Was ist Turbulenz?',
+          shortTitle: 'Einführung',
+          icon: 'wind',
+          description: 'Charakteristik turbulenter Strömung, Energiekaskade, Kolmogorov-Skalen.',
+          type: 'lesson',
+          simMode: 'turb-energy-spectrum',
+          available: true,
+        },
+        {
+          id: 'turb-rans',
+          title: 'RANS & Reynolds-Mittelung',
+          shortTitle: 'RANS',
+          icon: 'bar-chart',
+          description: 'Reynolds-Zerlegung, gemittelte Gleichungen, Reynolds-Spannungen.',
+          type: 'lesson',
+          simMode: 'none',
+          available: true,
+        },
+        {
+          id: 'turb-ke',
+          title: 'k-ε Modell',
+          shortTitle: 'k-ε',
+          icon: 'flame',
+          description: 'Das meistverwendete Turbulenzmodell: zwei Gleichungen für k und ε.',
+          type: 'lesson',
+          simMode: 'turb-channel-loglaw',
+          available: true,
+        },
+        {
+          id: 'turb-kw-sst',
+          title: 'k-ω SST Modell',
+          shortTitle: 'k-ω SST',
+          icon: 'shield',
+          description: 'Menters SST — der Industriestandard. k-ω + k-ε geblended.',
+          type: 'lesson',
+          simMode: 'none',
+          available: true,
+        },
+        {
+          id: 'turb-les',
+          title: 'Large Eddy Simulation (LES)',
+          shortTitle: 'LES',
+          icon: 'spiral',
+          description: 'Große Wirbel berechnen, kleine modellieren. Smagorinsky, WALE, dynamische Modelle.',
+          type: 'lesson',
+          simMode: 'turb-energy-spectrum',
+          available: true,
+        },
+        {
+          id: 'turb-dns',
+          title: 'Direkte Numerische Simulation',
+          shortTitle: 'DNS',
+          icon: 'microscope',
+          description: 'Alle Skalen auflösen — warum das extrem teuer ist.',
+          type: 'lesson',
+          simMode: 'none',
+          available: true,
+        },
+        {
+          id: 'turb-wall',
+          title: 'Wandbehandlung & y+',
+          shortTitle: 'y+ & Wand',
+          icon: 'thermometer',
+          description: 'Logarithmisches Wandgesetz, y+, Wandfunktionen vs. Wandauflösung.',
+          type: 'lesson',
+          simMode: 'turb-channel-loglaw',
+          available: true,
+        },
+      ],
+    },
+
+    // ═══════════════════════════════════════════════════════════════
+    // 12. ZWEIPHASENSTRÖMUNGEN
+    // ═══════════════════════════════════════════════════════════════
+    {
+      id: 'twophase',
+      title: 'Zweiphasenströmungen',
+      shortTitle: 'Zweiphasen',
+      icon: 'droplet',
+      description: 'VOF, Level-Set, Oberflächenspannung — Simulation von Phasengrenzen.',
+      type: 'category',
+      available: true,
+      children: [
+        {
+          id: 'twophase-intro',
+          title: 'Einführung Zweiphasen',
+          shortTitle: 'Einführung',
+          icon: 'droplet',
+          description: 'Was sind Zweiphasenströmungen? Euler-Euler vs. Euler-Lagrange.',
+          type: 'lesson',
+          simMode: 'none',
+          available: true,
+        },
+        {
+          id: 'twophase-vof',
+          title: 'Volume of Fluid (VOF)',
+          shortTitle: 'VOF',
+          icon: 'box',
+          description: 'Volumenfüllfaktor α — die meistverwendete Methode für freie Oberflächen.',
+          type: 'lesson',
+          simMode: 'twophase-vof-1d',
+          available: true,
+        },
+        {
+          id: 'twophase-levelset',
+          title: 'Level-Set-Methode',
+          shortTitle: 'Level-Set',
+          icon: 'map',
+          description: 'Vorzeichenbehaftete Abstandsfunktion zur Grenzflächenverfolgung.',
+          type: 'lesson',
+          simMode: 'none',
+          available: true,
+        },
+        {
+          id: 'twophase-surface-tension',
+          title: 'Oberflächenspannung & CSF',
+          shortTitle: 'Obfl.spannung',
+          icon: 'target',
+          description: 'Young-Laplace, Kontinuums-Oberflächenkraft (CSF), Kapillarzahl.',
+          type: 'lesson',
+          simMode: 'none',
           available: true,
         },
       ],
