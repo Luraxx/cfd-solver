@@ -244,7 +244,7 @@ export const curriculum: LessonNode = {
           icon: 'shield',
           description: 'Flux-Limiter (minmod, van Leer, superbee) — das Beste aus beiden Welten.',
           type: 'lesson',
-          simMode: 'fv-tvd',
+          simMode: 'fv-scheme-compare',
           available: true,
         },
         {

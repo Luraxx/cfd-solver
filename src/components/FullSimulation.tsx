@@ -30,8 +30,7 @@ const SIM_OPTIONS: SimOption[] = [
   // FVM
   { mode: 'fv-1d-convection', label: '1D Konvektion', icon: 'arrow-right', group: 'FVM' },
   { mode: 'fv-1d-convection-diffusion', label: 'Konvektion-Diffusion', icon: 'arrows-h', group: 'FVM' },
-  { mode: 'fv-tvd', label: 'TVD-Limiter', icon: 'shield', group: 'FVM' },
-  { mode: 'fv-scheme-compare', label: 'Schema-Vergleich', icon: 'bar-chart', group: 'FVM' },
+  { mode: 'fv-scheme-compare', label: 'Schema-Vergleich & TVD', icon: 'bar-chart', group: 'FVM' },
   // Stabilität
   { mode: 'stability-cfl', label: 'CFL-Analyse', icon: 'clock', group: 'Stabilität' },
   { mode: 'stability-peclet', label: 'Péclet-Analyse', icon: 'scale', group: 'Stabilität' },

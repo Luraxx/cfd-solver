@@ -11,6 +11,7 @@ import { createGrid2D, createField2D, initField2D, idx2D, step2DScalarTransport 
 import type { Grid2D, SimConfig2D, IC2DType } from '@/solver';
 import { fieldIsValid } from '@/solver/diagnostics';
 import katex from 'katex';
+import 'katex/dist/katex.min.css';
 import Icon from '@/components/Icons';
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
@@ -45,8 +46,7 @@ export default function SimSandbox({ simMode }: Props) {
         {simMode === 'fd-stencil-explorer' && <StencilExplorer />}
         {simMode === 'fv-1d-convection' && <ConvectionSandbox />}
         {simMode === 'fv-1d-convection-diffusion' && <ConvDiffSandbox />}
-        {simMode === 'fv-tvd' && <TVDSandbox />}
-        {simMode === 'fv-scheme-compare' && <SchemeCompareSandbox />}
+        {(simMode === 'fv-tvd' || simMode === 'fv-scheme-compare') && <SchemeCompareSandbox />}
         {simMode === 'stability-cfl' && <CFLSandbox />}
         {simMode === 'stability-peclet' && <PecletSandbox />}
         {simMode === '2d-scalar' && <ScalarTransport2DSandbox />}
@@ -100,6 +100,38 @@ function StatusBadge({ label, ok }: { label: string; ok: boolean }) {
     </span>
   );
 }
+
+function FormulaBox({ tex, label }: { tex: string; label?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (ref.current) {
+      try {
+        katex.render(tex, ref.current, { displayMode: true, throwOnError: false });
+      } catch { /* */ }
+    }
+  }, [tex]);
+  return (
+    <div className="border border-gray-800 rounded-md bg-gray-900/60 px-3 py-2 space-y-0.5">
+      {label && <span className="text-[9px] text-gray-600 uppercase tracking-wider block">{label}</span>}
+      <div ref={ref} className="text-gray-300 overflow-x-auto [&_.katex-display]:!my-0 [&_.katex]:text-[13px]" />
+    </div>
+  );
+}
+
+/* LaTeX formula strings — use String.raw to preserve backslashes */
+const TEX_HEAT = String.raw`\frac{\partial T}{\partial t} = \alpha \, \frac{\partial^2 T}{\partial x^2}`;
+const TEX_CONV = String.raw`\frac{\partial \phi}{\partial t} + u \frac{\partial \phi}{\partial x} = 0`;
+const TEX_CONVDIFF = String.raw`\frac{\partial \phi}{\partial t} + u \frac{\partial \phi}{\partial x} = \Gamma \frac{\partial^2 \phi}{\partial x^2}`;
+const TEX_CFL = String.raw`\text{CFL} = \frac{|u| \, \Delta t}{\Delta x} \leq 1`;
+const TEX_PE = String.raw`\text{Pe} = \frac{|u| \, \Delta x}{\Gamma}`;
+const TEX_SCALAR2D = String.raw`\frac{\partial \phi}{\partial t} + \nabla \!\cdot\! (\vec{u}\phi) = \Gamma \nabla^2 \phi`;
+const TEX_CAVITY = String.raw`\nabla^2 \psi = -\omega, \quad \frac{D\omega}{Dt} = \nu \nabla^2 \omega`;
+const TEX_JACOBI = String.raw`A\mathbf{x} = \mathbf{b}, \quad x_i^{(k+1)} = \frac{1}{a_{ii}}\!\left(b_i - \sum_{j \neq i} a_{ij} x_j^{(k)}\right)`;
+const TEX_SOD = String.raw`\frac{\partial \mathbf{U}}{\partial t} + \frac{\partial \mathbf{F}}{\partial x} = 0`;
+const TEX_SHOCK = String.raw`\frac{p_2}{p_1} = 1 + \frac{2\gamma}{\gamma+1}(M_1^2 - 1)`;
+const TEX_ENERGY = String.raw`E(k) = C_K \, \varepsilon^{2/3} \, k^{-5/3}`;
+const TEX_LOGLAW = String.raw`u^+ = \tfrac{1}{\kappa} \ln y^+ + B`;
+const TEX_VOF = String.raw`\frac{\partial \alpha}{\partial t} + u \frac{\partial \alpha}{\partial x} = 0`;
 
 const PLOT_LAYOUT_BASE: Partial<Plotly.Layout> = {
   autosize: true,
@@ -224,6 +256,7 @@ function HeatSandbox() {
         <Slider label="Zeitschritte" value={nSteps} min={50} max={2000} step={50} onChange={setNSteps} color="amber" />
         <RunBtn onClick={run} hasResult={!!result} />
         {result?.diverged && <div className="text-[10px] text-red-400 bg-red-900/20 rounded p-1.5"><Icon name="alert-triangle" className="text-red-400 inline-block mr-1" size={11} />Divergenz! r &gt; 0.5</div>}
+        <FormulaBox tex={TEX_HEAT} label="PDE" />
       </aside>
       <div className="flex-1 flex flex-col min-w-0 min-h-0">
         <div className="flex-1 min-h-0 p-1">
@@ -378,6 +411,7 @@ function ConvectionSandbox() {
         <StatusBadge label={`CFL = ${state.cfl.toFixed(2)}`} ok={state.cfl <= 1} />
         <RunBtn onClick={runSimulation} hasResult={state.hasRun} />
         {state.diverged && <DivergenceMsg />}
+        <FormulaBox tex={TEX_CONV} label="PDE" />
       </aside>
       <div className="flex-1 flex flex-col min-w-0 min-h-0">
         <div className="flex-1 min-h-0 p-1"><FVMPlot /></div>
@@ -413,47 +447,7 @@ function ConvDiffSandbox() {
         </div>
         <RunBtn onClick={runSimulation} hasResult={state.hasRun} />
         {state.diverged && <DivergenceMsg />}
-      </aside>
-      <div className="flex-1 flex flex-col min-w-0 min-h-0">
-        <div className="flex-1 min-h-0 p-1"><FVMPlot /></div>
-        {(state.history?.snapshots.length ?? 0) > 0 && <FVMPlaybackBar />}
-      </div>
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════════════
-   5. TVD SANDBOX — Flux limiters
-═══════════════════════════════════════════════════════════════════ */
-function TVDSandbox() {
-  const { state, dispatch, runSimulation } = useSimulation();
-
-  useEffect(() => { dispatch({ type: 'SET_PARAM', key: 'gamma', value: 0 }); }, [dispatch]);
-
-  const tvd: { v: SchemeName; l: string }[] = [
-    { v: 'TVD-minmod', l: 'minmod' }, { v: 'TVD-vanLeer', l: 'van Leer' }, { v: 'TVD-superbee', l: 'Superbee' },
-  ];
-
-  return (
-    <div className="flex flex-row-reverse h-full min-h-0">
-      <aside className="w-48 shrink-0 border-l border-gray-800/50 overflow-y-auto p-3 space-y-3">
-        <div className="text-[11px] font-semibold text-rose-400 mb-1 flex items-center gap-1.5"><Icon name="shield" className="text-rose-400" size={13} /> TVD-Limiter</div>
-        <SelectField label="Limiter" value={state.scheme} options={tvd.map(s => ({ v: s.v, l: s.l }))}
-          onChange={v => dispatch({ type: 'SET_SCHEME', scheme: v as SchemeName })} />
-        <div>
-          <span className="text-[10px] text-gray-500">Vergleich</span>
-          <select value={state.compareScheme ?? ''} onChange={e => dispatch({ type: 'SET_COMPARE_SCHEME', scheme: e.target.value ? e.target.value as SchemeName : null })}
-            className="w-full bg-gray-800/60 border border-gray-700/50 rounded px-2 py-1 text-[11px] text-gray-300 mt-0.5">
-            <option value="">— kein —</option>
-            <option value="UDS">UDS</option><option value="CDS">CDS</option>
-            {tvd.filter(s => s.v !== state.scheme).map(s => <option key={s.v} value={s.v}>{s.l}</option>)}
-          </select>
-        </div>
-        <SelectField label="IC" value={state.ic.type}
-          options={[{ v: 'step', l: 'Sprung' }, { v: 'gaussian', l: 'Gauß' }, { v: 'sine', l: 'Sinus' }]}
-          onChange={v => dispatch({ type: 'SET_IC', ic: { ...state.ic, type: v as InitialConditionType } })} />
-        <Slider label="CFL" value={state.cfl} min={0.1} max={1.0} step={0.05} onChange={v => dispatch({ type: 'SET_PARAM', key: 'cfl', value: v })} color="rose" />
-        <RunBtn onClick={runSimulation} hasResult={state.hasRun} />
+        <FormulaBox tex={TEX_CONVDIFF} label="PDE" />
       </aside>
       <div className="flex-1 flex flex-col min-w-0 min-h-0">
         <div className="flex-1 min-h-0 p-1"><FVMPlot /></div>
@@ -496,6 +490,7 @@ function SchemeCompareSandbox() {
         <Slider label="N" value={state.N} min={20} max={500} step={10} onChange={v => dispatch({ type: 'SET_PARAM', key: 'N', value: v })} color="sky" />
         <Slider label="CFL" value={state.cfl} min={0.1} max={1.0} step={0.05} onChange={v => dispatch({ type: 'SET_PARAM', key: 'cfl', value: v })} color="sky" />
         <RunBtn onClick={runSimulation} hasResult={state.hasRun} />
+        <FormulaBox tex={TEX_CONV} label="PDE" />
       </aside>
       <div className="flex-1 flex flex-col min-w-0 min-h-0">
         <div className="flex-1 min-h-0 p-1"><FVMPlot /></div>
@@ -524,6 +519,7 @@ function CFLSandbox() {
         <div className="text-[10px] text-gray-600">Δt = {state.dt.toExponential(2)}, Δx = {state.grid.dx.toFixed(4)}</div>
         <RunBtn onClick={runSimulation} hasResult={state.hasRun} />
         {state.diverged && <div className="text-[10px] text-red-400 bg-red-900/20 rounded p-1.5"><Icon name="explosion" className="text-red-400 inline-block mr-1" size={11} />Instabil! CFL &gt; 1</div>}
+        <FormulaBox tex={TEX_CFL} label="Stabilitätskriterium" />
       </aside>
       <div className="flex-1 flex flex-col min-w-0 min-h-0">
         <div className="flex-1 min-h-0 p-1"><FVMPlot /></div>
@@ -553,6 +549,7 @@ function PecletSandbox() {
           options={[{ v: 'UDS', l: 'UDS' }, { v: 'CDS', l: 'CDS' }, { v: 'TVD-minmod', l: 'TVD minmod' }, { v: 'TVD-vanLeer', l: 'TVD van Leer' }]}
           onChange={v => dispatch({ type: 'SET_SCHEME', scheme: v as SchemeName })} />
         <RunBtn onClick={runSimulation} hasResult={state.hasRun} />
+        <FormulaBox tex={TEX_PE} label="Kennzahl" />
       </aside>
       <div className="flex-1 flex flex-col min-w-0 min-h-0">
         <div className="flex-1 min-h-0 p-1"><FVMPlot /></div>
@@ -830,6 +827,7 @@ function ScalarTransport2DSandbox() {
         <Slider label="Γ (Diffusion)" value={gamma} min={0} max={0.05} step={0.001} onChange={setGamma} color="sky" />
         <Slider label="Zeitschritte" value={nSteps} min={50} max={1000} step={50} onChange={setNSteps} color="sky" />
         <RunBtn onClick={run} hasResult={!!snapshots} />
+        <FormulaBox tex={TEX_SCALAR2D} label="PDE" />
       </aside>
       <div className="flex-1 flex flex-col min-w-0 min-h-0">
         <div className="flex-1 min-h-0 p-1">
@@ -1154,6 +1152,7 @@ function CavitySandbox() {
           }`}>
           {computing ? 'Berechne...' : result ? '↻ Neustart' : '▶ Starten'}
         </button>
+        <FormulaBox tex={TEX_CAVITY} label="ω-ψ Formulierung" />
         {result && (
           <div className="space-y-1">
             <StatusBadge label={result.converged ? 'Konvergiert' : `${nIter} Iter.`} ok={result.converged} />
@@ -1309,6 +1308,7 @@ function JacobiGSSandbox() {
         <Slider label="Gitterpunkte N" value={N} min={8} max={128} step={8} onChange={setN} />
         <Slider label="Max. Iterationen" value={maxIter} min={50} max={1000} step={50} onChange={setMaxIter} />
         <RunBtn onClick={run} hasResult={!!result} />
+        <FormulaBox tex={TEX_JACOBI} label="Iterationsvorschrift" />
         {result && (
           <div className="text-[10px] text-gray-500 space-y-0.5">
             <p>Jacobi final: {result.jacRes[result.jacRes.length - 1].toExponential(2)}</p>
@@ -1368,7 +1368,11 @@ function SodTubeSandbox() {
   const [Ncells, setNcells] = useState(200);
   const [tEnd, setTEnd] = useState(0.2);
   const gamma = 1.4;
-  const [result, setResult] = useState<{ x: number[]; rho: number[]; u: number[]; p: number[] } | null>(null);
+
+  type SodSnap = { time: number; rho: number[]; u: number[]; p: number[] };
+  const [snapshots, setSnapshots] = useState<SodSnap[] | null>(null);
+  const [xArr, setXArr] = useState<number[]>([]);
+  const pb = usePlayback(snapshots?.length ?? 0);
 
   const run = useCallback(() => {
     const N = Ncells;
@@ -1390,10 +1394,54 @@ function SodTubeSandbox() {
     const pFn = (r: number, m: number, e: number) => (gamma - 1) * (e - 0.5 * m * m / r);
     const aFn = (r: number, pr: number) => Math.sqrt(gamma * pr / r);
 
+    const snaps: SodSnap[] = [];
+    const maxSnaps = 120;
+
+    // Record IC
+    snaps.push({
+      time: 0,
+      rho: Array.from(rho),
+      u: Array.from({ length: N }, (_, i) => mom[i] / rho[i]),
+      p: Array.from({ length: N }, (_, i) => pFn(rho[i], mom[i], ene[i])),
+    });
+
     let t = 0;
     const CFL = 0.5;
     let iter = 0;
     const maxIter = 50000;
+    let snapInterval = 1; // will be adjusted
+
+    // First pass: count total iterations to determine snapshot interval
+    const rhoTmp = Float64Array.from(rho);
+    const momTmp = Float64Array.from(mom);
+    const eneTmp = Float64Array.from(ene);
+    let tTmp = 0, iterTmp = 0;
+    while (tTmp < tEnd && iterTmp < maxIter) {
+      let sMax = 0;
+      for (let i = 0; i < N; i++) {
+        const ui = momTmp[i] / rhoTmp[i];
+        const pi = pFn(rhoTmp[i], momTmp[i], eneTmp[i]);
+        const ai = aFn(rhoTmp[i], Math.max(pi, 1e-10));
+        sMax = Math.max(sMax, Math.abs(ui) + ai);
+      }
+      let dt = CFL * dx / (sMax + 1e-14);
+      if (tTmp + dt > tEnd) dt = tEnd - tTmp;
+      const rhoN2 = new Float64Array(N);
+      const momN2 = new Float64Array(N);
+      const eneN2 = new Float64Array(N);
+      for (let i = 1; i < N - 1; i++) {
+        const pL = pFn(rhoTmp[i - 1], momTmp[i - 1], eneTmp[i - 1]);
+        const pR = pFn(rhoTmp[i + 1], momTmp[i + 1], eneTmp[i + 1]);
+        rhoN2[i] = 0.5 * (rhoTmp[i - 1] + rhoTmp[i + 1]) - 0.5 * dt / dx * (momTmp[i + 1] - momTmp[i - 1]);
+        momN2[i] = 0.5 * (momTmp[i - 1] + momTmp[i + 1]) - 0.5 * dt / dx * ((momTmp[i + 1] * momTmp[i + 1] / rhoTmp[i + 1] + pR) - (momTmp[i - 1] * momTmp[i - 1] / rhoTmp[i - 1] + pL));
+        eneN2[i] = 0.5 * (eneTmp[i - 1] + eneTmp[i + 1]) - 0.5 * dt / dx * (((eneTmp[i + 1] + pR) * momTmp[i + 1] / rhoTmp[i + 1]) - ((eneTmp[i - 1] + pL) * momTmp[i - 1] / rhoTmp[i - 1]));
+      }
+      rhoN2[0] = rhoN2[1]; momN2[0] = momN2[1]; eneN2[0] = eneN2[1];
+      rhoN2[N - 1] = rhoN2[N - 2]; momN2[N - 1] = momN2[N - 2]; eneN2[N - 1] = eneN2[N - 2];
+      rhoTmp.set(rhoN2); momTmp.set(momN2); eneTmp.set(eneN2);
+      tTmp += dt; iterTmp++;
+    }
+    snapInterval = Math.max(1, Math.floor(iterTmp / maxSnaps));
 
     while (t < tEnd && iter < maxIter) {
       let sMax = 0;
@@ -1430,16 +1478,49 @@ function SodTubeSandbox() {
       rho.set(rhoN); mom.set(momN); ene.set(eneN);
       t += dt;
       iter++;
+
+      if (iter % snapInterval === 0 || t >= tEnd) {
+        snaps.push({
+          time: t,
+          rho: Array.from(rho),
+          u: Array.from({ length: N }, (_, i) => mom[i] / rho[i]),
+          p: Array.from({ length: N }, (_, i) => pFn(rho[i], mom[i], ene[i])),
+        });
+      }
     }
 
-    const uOut = Array.from({ length: N }, (_, i) => mom[i] / rho[i]);
-    const pOut = Array.from({ length: N }, (_, i) => pFn(rho[i], mom[i], ene[i]));
+    setXArr(x);
+    setSnapshots(snaps);
+    pb.reset();
+    requestAnimationFrame(() => pb.setPlaying(true));
+  }, [Ncells, tEnd, gamma, pb]);
 
-    setResult({ x, rho: Array.from(rho), u: uOut, p: pOut });
-  }, [Ncells, tEnd, gamma]);
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => {
+      const t = (e.target as HTMLElement)?.tagName;
+      if (t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT') return;
+      if (e.code === 'Space') { e.preventDefault(); if (!snapshots) run(); else pb.setPlaying(p => !p); }
+    };
+    window.addEventListener('keydown', h);
+    return () => window.removeEventListener('keydown', h);
+  }, [run, snapshots, pb]);
 
   const [plotVar, setPlotVar] = useState<'rho' | 'u' | 'p'>('rho');
   const varLabels = { rho: 'Dichte ρ', u: 'Geschwindigkeit u', p: 'Druck p' };
+  const varColors = { rho: '#f59e0b', u: '#06b6d4', p: '#a78bfa' };
+
+  const plotData = useMemo(() => {
+    if (!snapshots || snapshots.length === 0) return null;
+    const snap = snapshots[pb.idx] ?? snapshots[0];
+    const init = snapshots[0];
+    return {
+      traces: [
+        { x: xArr, y: init[plotVar], type: 'scatter' as const, mode: 'lines' as const, name: `${varLabels[plotVar]}₀`, line: { color: '#4b5563', dash: 'dash', width: 1.5 } },
+        { x: xArr, y: snap[plotVar], type: 'scatter' as const, mode: 'lines' as const, name: `${varLabels[plotVar]} (t=${snap.time.toFixed(4)})`, line: { color: varColors[plotVar], width: 2.5 } },
+      ] as Plotly.Data[],
+      time: snap.time,
+    };
+  }, [snapshots, pb.idx, plotVar, xArr]);
 
   return (
     <div className="flex flex-row-reverse h-full">
@@ -1447,7 +1528,8 @@ function SodTubeSandbox() {
         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Sod Shock Tube</h3>
         <Slider label="Zellen N" value={Ncells} min={50} max={500} step={50} onChange={setNcells} />
         <Slider label="t_end" value={tEnd} min={0.05} max={0.4} step={0.05} onChange={setTEnd} suffix="s" />
-        <RunBtn onClick={run} hasResult={!!result} />
+        <RunBtn onClick={run} hasResult={!!snapshots} />
+        <FormulaBox tex={TEX_SOD} label="Euler-Gleichungen" />
         <div className="space-y-1">
           <span className="text-[10px] text-gray-500">Variable:</span>
           <div className="flex gap-1">
@@ -1460,51 +1542,62 @@ function SodTubeSandbox() {
           </div>
         </div>
       </aside>
-      <div className="flex-1 min-w-0 min-h-0 p-1">
-        {result ? (
-          <Plot
-            data={[{
-              x: result.x,
-              y: result[plotVar],
-              type: 'scatter',
-              mode: 'lines',
-              name: varLabels[plotVar],
-              line: { color: plotVar === 'rho' ? '#f59e0b' : plotVar === 'u' ? '#06b6d4' : '#a78bfa', width: 2 },
-            }] as Plotly.Data[]}
-            layout={{
-              ...PLOT_LAYOUT_BASE,
-              xaxis: { ...PLOT_LAYOUT_BASE.xaxis, title: { text: 'x' } },
-              yaxis: { ...PLOT_LAYOUT_BASE.yaxis, title: { text: varLabels[plotVar] } },
-            } as Plotly.Layout}
-            config={PLOT_CONFIG}
-            useResizeHandler
-            style={{ width: '100%', height: '100%' }}
-          />
-        ) : (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center space-y-4">
-              <svg width="220" height="120" viewBox="0 0 220 120" className="mx-auto">
-                {/* Rohr */}
-                <rect x="15" y="35" width="190" height="50" rx="3" fill="none" stroke="#4b5563" strokeWidth="1.5" />
-                {/* Membran */}
-                <line x1="110" y1="35" x2="110" y2="85" stroke="#a78bfa" strokeWidth="2" strokeDasharray="4 2" />
-                <text x="110" y="30" textAnchor="middle" fill="#a78bfa" fontSize="8">Membran</text>
-                {/* Hochdruck links */}
-                <text x="60" y="55" textAnchor="middle" fill="#f59e0b" fontSize="11" fontWeight="bold">ρ_L, p_L</text>
-                <text x="60" y="70" textAnchor="middle" fill="#6b7280" fontSize="9">Hochdruck</text>
-                {/* Niederdruck rechts */}
-                <text x="160" y="55" textAnchor="middle" fill="#06b6d4" fontSize="11" fontWeight="bold">ρ_R, p_R</text>
-                <text x="160" y="70" textAnchor="middle" fill="#6b7280" fontSize="9">Niederdruck</text>
-                {/* Wellen nach Aufreißen */}
-                <text x="45" y="105" textAnchor="middle" fill="#6b7280" fontSize="8">← Expansion</text>
-                <text x="165" y="105" textAnchor="middle" fill="#6b7280" fontSize="8">Stoß →</text>
-              </svg>
-              <div>
-                <p className="text-xs text-gray-400 font-medium">Sod Shock Tube</p>
-                <p className="text-[10px] text-gray-600 mt-1">Riemann-Problem: Membran reißt → Stoßwelle + Kontaktfläche + Expansion</p>
-                <p className="text-[10px] text-gray-600 mt-1"><kbd className="px-1 py-0.5 bg-gray-800 rounded text-gray-400">Space</kbd> oder Starten</p>
+      <div className="flex-1 flex flex-col min-w-0 min-h-0">
+        <div className="flex-1 min-h-0 p-1">
+          {plotData ? (
+            <Plot
+              data={plotData.traces}
+              layout={{
+                ...PLOT_LAYOUT_BASE,
+                xaxis: { ...PLOT_LAYOUT_BASE.xaxis, title: { text: 'x' } },
+                yaxis: { ...PLOT_LAYOUT_BASE.yaxis, title: { text: varLabels[plotVar] } },
+              } as Plotly.Layout}
+              config={PLOT_CONFIG}
+              useResizeHandler
+              style={{ width: '100%', height: '100%' }}
+            />
+          ) : (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center space-y-4">
+                <svg width="220" height="120" viewBox="0 0 220 120" className="mx-auto">
+                  {/* Rohr */}
+                  <rect x="15" y="35" width="190" height="50" rx="3" fill="none" stroke="#4b5563" strokeWidth="1.5" />
+                  {/* Membran */}
+                  <line x1="110" y1="35" x2="110" y2="85" stroke="#a78bfa" strokeWidth="2" strokeDasharray="4 2" />
+                  <text x="110" y="30" textAnchor="middle" fill="#a78bfa" fontSize="8">Membran</text>
+                  {/* Hochdruck links */}
+                  <text x="60" y="55" textAnchor="middle" fill="#f59e0b" fontSize="11" fontWeight="bold">ρ_L, p_L</text>
+                  <text x="60" y="70" textAnchor="middle" fill="#6b7280" fontSize="9">Hochdruck</text>
+                  {/* Niederdruck rechts */}
+                  <text x="160" y="55" textAnchor="middle" fill="#06b6d4" fontSize="11" fontWeight="bold">ρ_R, p_R</text>
+                  <text x="160" y="70" textAnchor="middle" fill="#6b7280" fontSize="9">Niederdruck</text>
+                  {/* Wellen nach Aufreißen */}
+                  <text x="45" y="105" textAnchor="middle" fill="#6b7280" fontSize="8">← Expansion</text>
+                  <text x="165" y="105" textAnchor="middle" fill="#6b7280" fontSize="8">Stoß →</text>
+                </svg>
+                <div>
+                  <p className="text-xs text-gray-400 font-medium">Sod Shock Tube</p>
+                  <p className="text-[10px] text-gray-600 mt-1">Riemann-Problem: Membran reißt → Stoßwelle + Kontaktfläche + Expansion</p>
+                  <p className="text-[10px] text-gray-600 mt-1"><kbd className="px-1 py-0.5 bg-gray-800 rounded text-gray-400">Space</kbd> oder Starten</p>
+                </div>
               </div>
             </div>
+          )}
+        </div>
+        {snapshots && (
+          <div className="flex items-center gap-2 px-3 py-1.5 border-t border-gray-800/60 text-xs shrink-0">
+            <button onClick={() => pb.setPlaying(p => !p)}
+              className="w-7 h-7 flex items-center justify-center rounded bg-gray-800 hover:bg-gray-700 text-gray-300 text-[11px]">
+              {pb.playing ? '⏸' : '▶'}
+            </button>
+            <input type="range" min={0} max={Math.max(0, (snapshots?.length ?? 1) - 1)} value={pb.idx}
+              onChange={e => { pb.setPlaying(false); pb.setIdx(+e.target.value); }}
+              className="flex-1 accent-amber-500" />
+            <span className="text-gray-600 font-mono w-20 text-right text-[10px]">t={plotData?.time.toFixed(4) ?? '0'}</span>
+            <select value={pb.speed} onChange={e => pb.setSpeed(+e.target.value)}
+              className="bg-gray-800 border border-gray-700/50 rounded px-1 py-0.5 text-[10px] text-gray-400">
+              <option value={120}>0.5×</option><option value={60}>1×</option><option value={30}>2×</option><option value={15}>4×</option>
+            </select>
           </div>
         )}
       </div>
@@ -1546,6 +1639,7 @@ function NormalShockSandbox() {
           <div className="flex justify-between"><span className="text-gray-500">T₂/T₁</span><span className="text-purple-400 font-mono">{shock.TRatio.toFixed(3)}</span></div>
           <div className="flex justify-between"><span className="text-gray-500">Ma₂</span><span className="text-emerald-400 font-mono">{shock.Ma2.toFixed(4)}</span></div>
         </div>
+        <FormulaBox tex={TEX_SHOCK} label="Rankine-Hugoniot" />
         <div className="text-[10px] text-gray-600 border-t border-gray-800 pt-2">
           γ = {gamma} (ideales Gas)
         </div>
@@ -1622,6 +1716,7 @@ function EnergySpectrumSandbox() {
           <p>k_η = {data.kEta.toFixed(0)}</p>
           <p>LES löst: k &lt; {(data.kCut).toFixed(0)}</p>
         </div>
+        <FormulaBox tex={TEX_ENERGY} label="Kolmogorov-Spektrum" />
       </aside>
       <div className="flex-1 min-w-0 min-h-0 p-1">
         <Plot
@@ -1688,6 +1783,7 @@ function ChannelLogLawSandbox() {
             <p>y⁺ &gt; 30: Log-Schicht</p>
           </div>
         </div>
+        <FormulaBox tex={TEX_LOGLAW} label="Log-Gesetz" />
       </aside>
       <div className="flex-1 min-w-0 min-h-0 p-1">
         <Plot
@@ -1721,36 +1817,86 @@ function ChannelLogLawSandbox() {
 function VOF1DSandbox() {
   const [N, setN] = useState(100);
   const [nSteps, setNSteps] = useState(200);
-  const [result, setResult] = useState<{ x: number[]; alpha0: number[]; alpha: number[] } | null>(null);
+  const [velocity, setVelocity] = useState(0.5);
+
+  type VOFSnap = { time: number; alpha: number[] };
+  const [snapshots, setSnapshots] = useState<VOFSnap[] | null>(null);
+  const [xArr, setXArr] = useState<number[]>([]);
+  const [alpha0, setAlpha0] = useState<number[]>([]);
+  const pb = usePlayback(snapshots?.length ?? 0);
 
   const run = useCallback(() => {
     const dx = 1 / N;
-    const u = 0.5;
+    const u = velocity;
     const CFL = 0.5;
-    const dt = CFL * dx / u;
+    const dt = CFL * dx / Math.abs(u + 1e-14);
 
     const alpha = new Float64Array(N);
-    const alpha0 = new Float64Array(N);
+    const a0 = new Float64Array(N);
     for (let i = 0; i < N; i++) {
       const xc = (i + 0.5) * dx;
       alpha[i] = (xc >= 0.2 && xc <= 0.4) ? 1.0 : 0.0;
-      alpha0[i] = alpha[i];
+      a0[i] = alpha[i];
     }
+
+    const snaps: VOFSnap[] = [];
+    const maxSnaps = 120;
+    const snapInterval = Math.max(1, Math.floor(nSteps / maxSnaps));
+
+    snaps.push({ time: 0, alpha: Array.from(alpha) });
 
     for (let step = 0; step < nSteps; step++) {
       const prev = Float64Array.from(alpha);
-      for (let i = 1; i < N; i++) {
-        alpha[i] = prev[i] - u * dt / dx * (prev[i] - prev[i - 1]);
+      if (u >= 0) {
+        for (let i = 1; i < N; i++) {
+          alpha[i] = prev[i] - u * dt / dx * (prev[i] - prev[i - 1]);
+        }
+        alpha[0] = prev[0] - u * dt / dx * (prev[0] - prev[N - 1]);
+      } else {
+        for (let i = 0; i < N - 1; i++) {
+          alpha[i] = prev[i] - u * dt / dx * (prev[i + 1] - prev[i]);
+        }
+        alpha[N - 1] = prev[N - 1] - u * dt / dx * (prev[0] - prev[N - 1]);
       }
-      alpha[0] = prev[0] - u * dt / dx * (prev[0] - prev[N - 1]);
       for (let i = 0; i < N; i++) {
         alpha[i] = Math.max(0, Math.min(1, alpha[i]));
+      }
+
+      if ((step + 1) % snapInterval === 0 || step === nSteps - 1) {
+        snaps.push({ time: (step + 1) * dt, alpha: Array.from(alpha) });
       }
     }
 
     const x = Array.from({ length: N }, (_, i) => (i + 0.5) * dx);
-    setResult({ x, alpha0: Array.from(alpha0), alpha: Array.from(alpha) });
-  }, [N, nSteps]);
+    setXArr(x);
+    setAlpha0(Array.from(a0));
+    setSnapshots(snaps);
+    pb.reset();
+    requestAnimationFrame(() => pb.setPlaying(true));
+  }, [N, nSteps, velocity, pb]);
+
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => {
+      const t = (e.target as HTMLElement)?.tagName;
+      if (t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT') return;
+      if (e.code === 'Space') { e.preventDefault(); if (!snapshots) run(); else pb.setPlaying(p => !p); }
+    };
+    window.addEventListener('keydown', h);
+    return () => window.removeEventListener('keydown', h);
+  }, [run, snapshots, pb]);
+
+  const plotData = useMemo(() => {
+    if (!snapshots || snapshots.length === 0) return null;
+    const snap = snapshots[pb.idx] ?? snapshots[0];
+    return {
+      traces: [
+        { x: xArr, y: alpha0, type: 'scatter' as const, mode: 'lines' as const, name: 'α₀ (Anfang)', line: { color: '#4b5563', width: 1.5, dash: 'dash' }, fill: 'tozeroy', fillcolor: 'rgba(75,85,99,0.15)' },
+        { x: xArr, y: snap.alpha, type: 'scatter' as const, mode: 'lines' as const, name: `α (t=${snap.time.toFixed(4)})`, line: { color: '#06b6d4', width: 2.5 }, fill: 'tozeroy', fillcolor: 'rgba(6,182,212,0.15)' },
+      ] as Plotly.Data[],
+      time: snap.time,
+      mass: snap.alpha.reduce((s, v) => s + v, 0),
+    };
+  }, [snapshots, pb.idx, xArr, alpha0]);
 
   return (
     <div className="flex flex-row-reverse h-full">
@@ -1758,60 +1904,77 @@ function VOF1DSandbox() {
         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">VOF 1D Advektion</h3>
         <Slider label="Zellen N" value={N} min={20} max={500} step={20} onChange={setN} />
         <Slider label="Zeitschritte" value={nSteps} min={50} max={1000} step={50} onChange={setNSteps} />
-        <RunBtn onClick={run} hasResult={!!result} />
-        {result && (
+        <Slider label="Geschwindigkeit u" value={velocity} min={-1.0} max={1.0} step={0.1} onChange={setVelocity} color="cyan" />
+        <RunBtn onClick={run} hasResult={!!snapshots} />
+        <FormulaBox tex={TEX_VOF} label="VOF-Transport" />
+        {plotData && (
           <div className="text-[10px] text-gray-500 border-t border-gray-800 pt-2 space-y-0.5">
-            <p>u = 0.5 (konstant)</p>
+            <p>u = {velocity.toFixed(1)}</p>
             <p>Schema: Upwind (1. Ordnung)</p>
-            <p>Masse₀: {result.alpha0.reduce((s, v) => s + v, 0).toFixed(1)}</p>
-            <p>Masse_f: {result.alpha.reduce((s, v) => s + v, 0).toFixed(1)}</p>
+            <p>Masse₀: {alpha0.reduce((s, v) => s + v, 0).toFixed(1)}</p>
+            <p>Masse: {plotData.mass.toFixed(1)}</p>
           </div>
         )}
       </aside>
-      <div className="flex-1 min-w-0 min-h-0 p-1">
-        {result ? (
-          <Plot
-            data={[
-              { x: result.x, y: result.alpha0, type: 'scatter', mode: 'lines', name: 'α₀ (Anfang)', line: { color: '#4b5563', width: 1.5, dash: 'dash' }, fill: 'tozeroy', fillcolor: 'rgba(75,85,99,0.15)' },
-              { x: result.x, y: result.alpha, type: 'scatter', mode: 'lines', name: 'α (Ergebnis)', line: { color: '#06b6d4', width: 2.5 }, fill: 'tozeroy', fillcolor: 'rgba(6,182,212,0.15)' },
-            ] as Plotly.Data[]}
-            layout={{
-              ...PLOT_LAYOUT_BASE,
-              xaxis: { ...PLOT_LAYOUT_BASE.xaxis, title: { text: 'x' } },
-              yaxis: { ...PLOT_LAYOUT_BASE.yaxis, title: { text: 'α' }, range: [-0.05, 1.15] },
-            } as Plotly.Layout}
-            config={PLOT_CONFIG}
-            useResizeHandler
-            style={{ width: '100%', height: '100%' }}
-          />
-        ) : (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center space-y-4">
-              <svg width="220" height="100" viewBox="0 0 220 100" className="mx-auto">
-                {/* Kanal */}
-                <line x1="15" y1="25" x2="205" y2="25" stroke="#4b5563" strokeWidth="1" />
-                <line x1="15" y1="75" x2="205" y2="75" stroke="#4b5563" strokeWidth="1" />
-                {/* Phase 1 — Luft */}
-                <rect x="15" y="25" width="80" height="50" fill="#1e3a5f" opacity="0.3" />
-                <text x="55" y="55" textAnchor="middle" fill="#60a5fa" fontSize="10">α=0</text>
-                <text x="55" y="68" textAnchor="middle" fill="#6b7280" fontSize="8">Luft</text>
-                {/* Interface */}
-                <line x1="95" y1="25" x2="95" y2="75" stroke="#06b6d4" strokeWidth="2.5" />
-                {/* Phase 2 — Wasser */}
-                <rect x="95" y="25" width="80" height="50" fill="#06b6d4" opacity="0.15" />
-                <text x="135" y="55" textAnchor="middle" fill="#06b6d4" fontSize="10">α=1</text>
-                <text x="135" y="68" textAnchor="middle" fill="#6b7280" fontSize="8">Wasser</text>
-                {/* Transport-Pfeil */}
-                <line x1="60" y1="88" x2="150" y2="88" stroke="#6b7280" strokeWidth="1" />
-                <polygon points="150,85 157,88 150,91" fill="#6b7280" />
-                <text x="105" y="98" textAnchor="middle" fill="#6b7280" fontSize="8">u · ∂α/∂x (VOF)</text>
-              </svg>
-              <div>
-                <p className="text-xs text-gray-400 font-medium">VOF 1D Advektion</p>
-                <p className="text-[10px] text-gray-600 mt-1">Volume-of-Fluid: Phasengrenze wird durch Geschwindigkeitsfeld transportiert</p>
-                <p className="text-[10px] text-gray-600 mt-1"><kbd className="px-1 py-0.5 bg-gray-800 rounded text-gray-400">Space</kbd> oder Starten</p>
+      <div className="flex-1 flex flex-col min-w-0 min-h-0">
+        <div className="flex-1 min-h-0 p-1">
+          {plotData ? (
+            <Plot
+              data={plotData.traces}
+              layout={{
+                ...PLOT_LAYOUT_BASE,
+                xaxis: { ...PLOT_LAYOUT_BASE.xaxis, title: { text: 'x' } },
+                yaxis: { ...PLOT_LAYOUT_BASE.yaxis, title: { text: 'α' }, range: [-0.05, 1.15] },
+              } as Plotly.Layout}
+              config={PLOT_CONFIG}
+              useResizeHandler
+              style={{ width: '100%', height: '100%' }}
+            />
+          ) : (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center space-y-4">
+                <svg width="220" height="100" viewBox="0 0 220 100" className="mx-auto">
+                  {/* Kanal */}
+                  <line x1="15" y1="25" x2="205" y2="25" stroke="#4b5563" strokeWidth="1" />
+                  <line x1="15" y1="75" x2="205" y2="75" stroke="#4b5563" strokeWidth="1" />
+                  {/* Phase 1 — Luft */}
+                  <rect x="15" y="25" width="80" height="50" fill="#1e3a5f" opacity="0.3" />
+                  <text x="55" y="55" textAnchor="middle" fill="#60a5fa" fontSize="10">α=0</text>
+                  <text x="55" y="68" textAnchor="middle" fill="#6b7280" fontSize="8">Luft</text>
+                  {/* Interface */}
+                  <line x1="95" y1="25" x2="95" y2="75" stroke="#06b6d4" strokeWidth="2.5" />
+                  {/* Phase 2 — Wasser */}
+                  <rect x="95" y="25" width="80" height="50" fill="#06b6d4" opacity="0.15" />
+                  <text x="135" y="55" textAnchor="middle" fill="#06b6d4" fontSize="10">α=1</text>
+                  <text x="135" y="68" textAnchor="middle" fill="#6b7280" fontSize="8">Wasser</text>
+                  {/* Transport-Pfeil */}
+                  <line x1="60" y1="88" x2="150" y2="88" stroke="#6b7280" strokeWidth="1" />
+                  <polygon points="150,85 157,88 150,91" fill="#6b7280" />
+                  <text x="105" y="98" textAnchor="middle" fill="#6b7280" fontSize="8">u · ∂α/∂x (VOF)</text>
+                </svg>
+                <div>
+                  <p className="text-xs text-gray-400 font-medium">VOF 1D Advektion</p>
+                  <p className="text-[10px] text-gray-600 mt-1">Volume-of-Fluid: Phasengrenze wird durch Geschwindigkeitsfeld transportiert</p>
+                  <p className="text-[10px] text-gray-600 mt-1"><kbd className="px-1 py-0.5 bg-gray-800 rounded text-gray-400">Space</kbd> oder Starten</p>
+                </div>
               </div>
             </div>
+          )}
+        </div>
+        {snapshots && (
+          <div className="flex items-center gap-2 px-3 py-1.5 border-t border-gray-800/60 text-xs shrink-0">
+            <button onClick={() => pb.setPlaying(p => !p)}
+              className="w-7 h-7 flex items-center justify-center rounded bg-gray-800 hover:bg-gray-700 text-gray-300 text-[11px]">
+              {pb.playing ? '⏸' : '▶'}
+            </button>
+            <input type="range" min={0} max={Math.max(0, (snapshots?.length ?? 1) - 1)} value={pb.idx}
+              onChange={e => { pb.setPlaying(false); pb.setIdx(+e.target.value); }}
+              className="flex-1 accent-cyan-500" />
+            <span className="text-gray-600 font-mono w-20 text-right text-[10px]">t={plotData?.time.toFixed(4) ?? '0'}</span>
+            <select value={pb.speed} onChange={e => pb.setSpeed(+e.target.value)}
+              className="bg-gray-800 border border-gray-700/50 rounded px-1 py-0.5 text-[10px] text-gray-400">
+              <option value={120}>0.5×</option><option value={60}>1×</option><option value={30}>2×</option><option value={15}>4×</option>
+            </select>
           </div>
         )}
       </div>
