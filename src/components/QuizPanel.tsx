@@ -95,7 +95,7 @@ export default function QuizPanel({ lessonId, questions: directQuestions, title 
     const great = pct >= 80;
     return (
       <div className="flex items-center justify-center h-full px-6">
-        <div className="max-w-sm w-full text-center">
+          <div className="max-w-md w-full text-center">
           <div className={`text-5xl font-bold mb-2 ${great ? 'text-emerald-400' : 'text-amber-400'}`}>{pct}%</div>
           <p className="text-sm text-gray-400 mb-1">{score} von {total} richtig</p>
           <p className="text-xs text-gray-600 mb-6">
@@ -112,7 +112,7 @@ export default function QuizPanel({ lessonId, questions: directQuestions, title 
 
   return (
     <div className="flex items-start justify-center h-full px-6 py-10 overflow-y-auto">
-      <div className="max-w-lg w-full">
+      <div className="max-w-2xl w-full">
         {title && <h2 className="text-sm font-bold text-gray-300 mb-4">{title}</h2>}
 
         {/* Progress */}

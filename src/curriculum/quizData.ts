@@ -98,6 +98,37 @@ export const QUIZ_TOPICS: QuizTopic[] = [
   { id: 'alle', title: 'Alle Fragen (Mix)', description: 'Zufällige Mischung aus allen Themen', lessonIds: [] },
 ];
 
+/** Vorlesung units for sub-selection in QuizMode */
+export interface VorlesungUnit {
+  id: string;       // e.g. 'u02'
+  num: string;      // e.g. '02'
+  title: string;
+  short: string;    // short label for grid
+}
+
+export const VORLESUNG_UNITS: VorlesungUnit[] = [
+  { id: 'u02', num: '02', title: 'Beispielsimulation', short: 'Beispielsim.' },
+  { id: 'u03', num: '03', title: 'Diskretisierung der 1D Erhaltungsgleichung', short: '1D Diskretisierung' },
+  { id: 'u04', num: '04', title: 'Diskretisierung in der Zeit', short: 'Zeitdiskretisierung' },
+  { id: 'u05', num: '05', title: 'Diskretisierung im Raum', short: 'Raumdiskretisierung' },
+  { id: 'u06', num: '06', title: 'Masse-, Impuls- und Energieerhaltung in 2D/3D', short: 'Erhaltungsgl. 2D/3D' },
+  { id: 'u07', num: '07', title: 'Finite Volumen Methode', short: 'FVM' },
+  { id: 'u08', num: '08', title: 'Rechengitter', short: 'Gitter' },
+  { id: 'u09', num: '09', title: 'Algorithmen', short: 'Algorithmen' },
+  { id: 'u10', num: '10', title: 'Kompressible Strömungen', short: 'Kompressibel' },
+  { id: 'u11', num: '11', title: 'Eigenschaften der Turbulenz', short: 'Turbulenz-Eigens.' },
+  { id: 'u12', num: '12', title: 'RANS Modellierung', short: 'RANS' },
+  { id: 'u13', num: '13', title: 'Verschiedene RANS Schließungsansätze', short: 'RANS-Modelle' },
+  { id: 'u14', num: '14', title: 'Grobstrukturanalyse (LES)', short: 'LES' },
+  { id: 'u15', num: '15', title: 'Zweiphasenströmungen', short: 'Zweiphasen' },
+];
+
+/** Extract unit number from vorlesung question id (e.g. 'vl-04-02a' → '04') */
+export function getVorlesungUnit(q: QuizQuestion): string | null {
+  const m = q.id.match(/^vl-(\d{2})/);
+  return m ? m[1] : null;
+}
+
 
 export const quizBank: Record<string, LessonQuiz> = {
 

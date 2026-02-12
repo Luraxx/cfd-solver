@@ -196,8 +196,8 @@ export default function LessonPage({ lessonId, onBack, onNavigate, onComplete }:
             ref={theoryRef}
             className={`overflow-y-auto py-10 px-8 transition-all duration-300 ${
               theoryFullWidth
-                ? 'flex-1 max-w-2xl mx-auto'
-                : 'w-[420px] shrink-0 border-r border-gray-800/50'
+                ? 'flex-1 max-w-4xl mx-auto'
+                : 'w-[520px] shrink-0 border-r border-gray-800/50'
             }`}
           >
             {/* Title */}
@@ -241,7 +241,7 @@ export default function LessonPage({ lessonId, onBack, onNavigate, onComplete }:
 
       {/* ── Fixed bottom bar (outside scroll) ──────────────── */}
       <div className="shrink-0 border-t border-gray-800/60 bg-gray-950/90 backdrop-blur-sm z-20">
-        <div className="flex items-center justify-between px-4 py-2.5 max-w-4xl mx-auto">
+        <div className="flex items-center justify-between px-4 py-2.5 max-w-5xl mx-auto">
           {/* Prev */}
           <div className="w-40">
             {prev && prev.available ? (

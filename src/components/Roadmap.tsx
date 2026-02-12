@@ -46,7 +46,7 @@ export default function Roadmap({ onOpen, completed, onOpenFullSim, onOpenQuiz }
         style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
 
       {/* ── top area ───────────────────────────────────────── */}
-      <div className="relative z-10 max-w-2xl mx-auto pt-20 pb-6 px-6">
+      <div className="relative z-10 max-w-3xl mx-auto pt-20 pb-6 px-6">
         <h1 className="text-4xl font-bold tracking-tight text-white">
           CFD Lab
         </h1>
@@ -66,7 +66,7 @@ export default function Roadmap({ onOpen, completed, onOpenFullSim, onOpenQuiz }
       </div>
 
       {/* ── vertical path ──────────────────────────────────── */}
-      <div className="relative z-10 max-w-2xl mx-auto pb-32">
+      <div className="relative z-10 max-w-3xl mx-auto pb-32">
         {/* trunk line */}
         <div className="absolute left-[23px] top-0 bottom-0 w-px bg-gradient-to-b from-gray-800 via-gray-800 to-transparent ml-6" />
 

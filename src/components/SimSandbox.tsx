@@ -834,14 +834,16 @@ function ScalarTransport2DSandbox() {
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   10. CAVITY SANDBOX — Lid-Driven Cavity (SIMPLE-like solver)
-   A simplified 2D incompressible Navier-Stokes solver
+   10. CAVITY SANDBOX — Lid-Driven Cavity (Vorticity-Streamfunction)
+   2D incompressible Navier-Stokes via ω-ψ formulation
 ═══════════════════════════════════════════════════════════════════ */
 
 interface CavityResult {
   u: Float64Array;   // x-velocity
   v: Float64Array;   // y-velocity
-  p: Float64Array;   // pressure
+  p: Float64Array;   // pressure (recovered)
+  w: Float64Array;   // vorticity
+  psi: Float64Array; // streamfunction
   Nx: number;
   Ny: number;
   Lx: number;
@@ -851,140 +853,169 @@ interface CavityResult {
 }
 
 function solveCavity(
-  Nx: number, Ny: number, Re: number, uLid: number, nIter: number, alpha: number
+  Nx: number, Ny: number, Re: number, uLid: number, nIter: number, _alpha: number
 ): CavityResult {
   const Lx = 1, Ly = 1;
-  const dx = Lx / Nx, dy = Ly / Ny;
-  const n = Nx * Ny;
+  const dx = Lx / (Nx - 1), dy = Ly / (Ny - 1);
   const nu = uLid * Lx / Re;
+  const n = Nx * Ny;
 
-  // Staggered-like approach on collocated grid with pressure correction
-  const u = new Float64Array(n);
-  const v = new Float64Array(n);
-  const p = new Float64Array(n);
-  const uStar = new Float64Array(n);
-  const vStar = new Float64Array(n);
-  const pp = new Float64Array(n); // pressure correction
+  const w   = new Float64Array(n); // vorticity
+  const psi = new Float64Array(n); // streamfunction
+  const u   = new Float64Array(n); // velocity
+  const v   = new Float64Array(n);
   const residuals: number[] = [];
 
-  const dt = Math.min(0.25 * dx * dx / nu, 0.5 * dx / uLid);
   const idx = (i: number, j: number) => j * Nx + i;
 
+  // Time step — can be more aggressive with upwind
+  const dt = Math.min(0.25 * Re * dx * dx, 0.5 * dx / uLid, 0.25 * dx * dx / nu);
+
   for (let iter = 0; iter < nIter; iter++) {
-    // --- Momentum predictor (explicit) ---
-    for (let j = 1; j < Ny - 1; j++) {
-      for (let i = 1; i < Nx - 1; i++) {
-        const c = idx(i, j);
-        const uP = u[c], vP = v[c];
-        const uE = u[idx(i + 1, j)], uW = u[idx(i - 1, j)];
-        const uN = u[idx(i, j + 1)], uS = u[idx(i, j - 1)];
-        const vE = v[idx(i + 1, j)], vW = v[idx(i - 1, j)];
-        const vN = v[idx(i, j + 1)], vS = v[idx(i, j - 1)];
-
-        // Convection (UDS) + Diffusion
-        const duConv = uP * (uP - uW) / dx + vP * (uP - uS) / dy;
-        const duDiff = nu * ((uE - 2 * uP + uW) / (dx * dx) + (uN - 2 * uP + uS) / (dy * dy));
-        const dpx = (p[idx(i + 1, j)] - p[idx(i - 1, j)]) / (2 * dx);
-
-        const dvConv = uP * (vP - vW) / dx + vP * (vP - vS) / dy;
-        const dvDiff = nu * ((vE - 2 * vP + vW) / (dx * dx) + (vN - 2 * vP + vS) / (dy * dy));
-        const dpy = (p[idx(i, j + 1)] - p[idx(i, j - 1)]) / (2 * dy);
-
-        uStar[c] = uP + dt * (-duConv + duDiff - dpx);
-        vStar[c] = vP + dt * (-dvConv + dvDiff - dpy);
-      }
-    }
-
-    // Apply BCs to uStar, vStar
-    for (let i = 0; i < Nx; i++) {
-      uStar[idx(i, 0)] = 0; vStar[idx(i, 0)] = 0;   // bottom no-slip
-      uStar[idx(i, Ny - 1)] = uLid; vStar[idx(i, Ny - 1)] = 0; // top lid
-    }
-    for (let j = 0; j < Ny; j++) {
-      uStar[idx(0, j)] = 0; vStar[idx(0, j)] = 0;   // left
-      uStar[idx(Nx - 1, j)] = 0; vStar[idx(Nx - 1, j)] = 0; // right
-    }
-
-    // --- Pressure correction (Poisson) ---
-    pp.fill(0);
-    for (let pIter = 0; pIter < 30; pIter++) {
+    // ─── 1. Solve Poisson: ∇²ψ = -ω (GS with SOR) ───
+    for (let gs = 0; gs < 50; gs++) {
       for (let j = 1; j < Ny - 1; j++) {
         for (let i = 1; i < Nx - 1; i++) {
           const c = idx(i, j);
-          const div = (uStar[idx(i + 1, j)] - uStar[idx(i - 1, j)]) / (2 * dx)
-            + (vStar[idx(i, j + 1)] - vStar[idx(i, j - 1)]) / (2 * dy);
-          const rhs = div / dt;
-          pp[c] = alpha * (
-            (pp[idx(i + 1, j)] + pp[idx(i - 1, j)]) / (dx * dx) +
-            (pp[idx(i, j + 1)] + pp[idx(i, j - 1)]) / (dy * dy) -
-            rhs
-          ) / (2 / (dx * dx) + 2 / (dy * dy))
-            + (1 - alpha) * pp[c];
+          const psiNew = (
+            (psi[idx(i + 1, j)] + psi[idx(i - 1, j)]) / (dx * dx) +
+            (psi[idx(i, j + 1)] + psi[idx(i, j - 1)]) / (dy * dy) +
+            w[c]
+          ) / (2 / (dx * dx) + 2 / (dy * dy));
+          psi[c] = psi[c] + 1.5 * (psiNew - psi[c]); // SOR ω=1.5
         }
       }
-      // Zero-gradient BC for pressure
-      for (let i = 0; i < Nx; i++) {
-        pp[idx(i, 0)] = pp[idx(i, 1)];
-        pp[idx(i, Ny - 1)] = pp[idx(i, Ny - 2)];
-      }
-      for (let j = 0; j < Ny; j++) {
-        pp[idx(0, j)] = pp[idx(1, j)];
-        pp[idx(Nx - 1, j)] = pp[idx(Nx - 1 > 0 ? Nx - 2 : 0, j)];
-      }
+      // ψ = 0 on all boundaries (already zero-initialized, enforce again)
+      for (let i = 0; i < Nx; i++) { psi[idx(i, 0)] = 0; psi[idx(i, Ny - 1)] = 0; }
+      for (let j = 0; j < Ny; j++) { psi[idx(0, j)] = 0; psi[idx(Nx - 1, j)] = 0; }
     }
 
-    // --- Correct velocities and pressure ---
+    // ─── 2. Recover velocities: u=∂ψ/∂y, v=−∂ψ/∂x ───
     for (let j = 1; j < Ny - 1; j++) {
       for (let i = 1; i < Nx - 1; i++) {
         const c = idx(i, j);
-        u[c] = uStar[c] - dt * (pp[idx(i + 1, j)] - pp[idx(i - 1, j)]) / (2 * dx);
-        v[c] = vStar[c] - dt * (pp[idx(i, j + 1)] - pp[idx(i, j - 1)]) / (2 * dy);
-        p[c] += 0.3 * pp[c];
+        u[c] = (psi[idx(i, j + 1)] - psi[idx(i, j - 1)]) / (2 * dy);
+        v[c] = -(psi[idx(i + 1, j)] - psi[idx(i - 1, j)]) / (2 * dx);
       }
     }
-
-    // Apply velocity BCs again
+    // Velocity BCs
     for (let i = 0; i < Nx; i++) {
-      u[idx(i, 0)] = 0; v[idx(i, 0)] = 0;
-      u[idx(i, Ny - 1)] = uLid; v[idx(i, Ny - 1)] = 0;
+      u[idx(i, 0)] = 0; v[idx(i, 0)] = 0;           // bottom
+      u[idx(i, Ny - 1)] = uLid; v[idx(i, Ny - 1)] = 0; // top lid
     }
     for (let j = 0; j < Ny; j++) {
-      u[idx(0, j)] = 0; v[idx(0, j)] = 0;
-      u[idx(Nx - 1, j)] = 0; v[idx(Nx - 1, j)] = 0;
+      u[idx(0, j)] = 0; v[idx(0, j)] = 0;            // left
+      u[idx(Nx - 1, j)] = 0; v[idx(Nx - 1, j)] = 0;  // right
     }
 
-    // Residual check
-    let res = 0;
+    // ─── 3. Vorticity BCs (Thom's formula from no-slip) ───
+    for (let i = 1; i < Nx - 1; i++) {
+      // bottom wall
+      w[idx(i, 0)] = -2 * psi[idx(i, 1)] / (dy * dy);
+      // top wall (lid moving at uLid)
+      w[idx(i, Ny - 1)] = -2 * psi[idx(i, Ny - 2)] / (dy * dy) - 2 * uLid / dy;
+    }
+    for (let j = 1; j < Ny - 1; j++) {
+      // left wall
+      w[idx(0, j)] = -2 * psi[idx(1, j)] / (dx * dx);
+      // right wall
+      w[idx(Nx - 1, j)] = -2 * psi[idx(Nx - 2, j)] / (dx * dx);
+    }
+
+    // ─── 4. Transport vorticity: ∂ω/∂t + u·∇ω = ν∇²ω ───
+    const wOld = new Float64Array(w);
+    let maxDw = 0;
     for (let j = 1; j < Ny - 1; j++) {
       for (let i = 1; i < Nx - 1; i++) {
         const c = idx(i, j);
-        const div = (u[idx(i + 1, j)] - u[idx(i - 1, j)]) / (2 * dx)
-          + (v[idx(i, j + 1)] - v[idx(i, j - 1)]) / (2 * dy);
-        res += div * div;
+        const uc = u[c], vc = v[c];
+        const wE = wOld[idx(i + 1, j)], wW = wOld[idx(i - 1, j)];
+        const wN = wOld[idx(i, j + 1)], wS = wOld[idx(i, j - 1)];
+        const wC = wOld[c];
+
+        // Upwind convection
+        const dwdx = uc > 0 ? uc * (wC - wW) / dx : uc * (wE - wC) / dx;
+        const dwdy = vc > 0 ? vc * (wC - wS) / dy : vc * (wN - wC) / dy;
+
+        // Central diffusion
+        const lapW = (wE - 2 * wC + wW) / (dx * dx) + (wN - 2 * wC + wS) / (dy * dy);
+
+        w[c] = wC + dt * (-(dwdx + dwdy) + nu * lapW);
+        maxDw = Math.max(maxDw, Math.abs(w[c] - wC));
       }
     }
-    residuals.push(Math.sqrt(res / n));
-    if (residuals[residuals.length - 1] < 1e-6) {
-      return { u, v, p, Nx, Ny, Lx, Ly, converged: true, residuals };
+
+    residuals.push(maxDw);
+    if (maxDw < 1e-7) {
+      return buildResult(u, v, w, psi, Nx, Ny, Lx, Ly, dx, dy, nu, true, residuals);
     }
   }
 
-  return { u, v, p, Nx, Ny, Lx, Ly, converged: false, residuals };
+  return buildResult(u, v, w, psi, Nx, Ny, Lx, Ly, dx, dy, nu, false, residuals);
+}
+
+/** Recover pressure field from converged velocity via Poisson: ∇²p = RHS */
+function buildResult(
+  u: Float64Array, v: Float64Array, w: Float64Array, psi: Float64Array,
+  Nx: number, Ny: number, Lx: number, Ly: number,
+  dx: number, dy: number, nu: number,
+  converged: boolean, residuals: number[]
+): CavityResult {
+  const n = Nx * Ny;
+  const p = new Float64Array(n);
+  const idx = (i: number, j: number) => j * Nx + i;
+
+  // Pressure Poisson: ∇²p = -( (∂u/∂x)² + 2·∂v/∂x·∂u/∂y + (∂v/∂y)² )
+  const rhs = new Float64Array(n);
+  for (let j = 1; j < Ny - 1; j++) {
+    for (let i = 1; i < Nx - 1; i++) {
+      const c = idx(i, j);
+      const dudx = (u[idx(i + 1, j)] - u[idx(i - 1, j)]) / (2 * dx);
+      const dudy = (u[idx(i, j + 1)] - u[idx(i, j - 1)]) / (2 * dy);
+      const dvdx = (v[idx(i + 1, j)] - v[idx(i - 1, j)]) / (2 * dx);
+      const dvdy = (v[idx(i, j + 1)] - v[idx(i, j - 1)]) / (2 * dy);
+      rhs[c] = -(dudx * dudx + 2 * dvdx * dudy + dvdy * dvdy);
+    }
+  }
+
+  // Solve with GS (30 iterations is fine for visualization)
+  for (let gs = 0; gs < 40; gs++) {
+    for (let j = 1; j < Ny - 1; j++) {
+      for (let i = 1; i < Nx - 1; i++) {
+        const c = idx(i, j);
+        p[c] = (
+          (p[idx(i + 1, j)] + p[idx(i - 1, j)]) / (dx * dx) +
+          (p[idx(i, j + 1)] + p[idx(i, j - 1)]) / (dy * dy) -
+          rhs[c]
+        ) / (2 / (dx * dx) + 2 / (dy * dy));
+      }
+    }
+    // Neumann BCs (zero-gradient)
+    for (let i = 0; i < Nx; i++) { p[idx(i, 0)] = p[idx(i, 1)]; p[idx(i, Ny - 1)] = p[idx(i, Ny - 2)]; }
+    for (let j = 0; j < Ny; j++) { p[idx(0, j)] = p[idx(1, j)]; p[idx(Nx - 1, j)] = p[idx(Nx - 2, j)]; }
+  }
+
+  // Remove mean pressure
+  let pMean = 0;
+  for (let i = 0; i < n; i++) pMean += p[i];
+  pMean /= n;
+  for (let i = 0; i < n; i++) p[i] -= pMean;
+
+  return { u, v, p, w, psi, Nx, Ny, Lx, Ly, converged, residuals };
 }
 
 function CavitySandbox() {
-  const [Nx, setNx] = useState(30);
+  const [Nx, setNx] = useState(35);
   const [Re, setRe] = useState(100);
-  const [nIter, setNIter] = useState(500);
+  const [nIter, setNIter] = useState(1500);
   const [result, setResult] = useState<CavityResult | null>(null);
   const [computing, setComputing] = useState(false);
-  const [vizMode, setVizMode] = useState<'speed' | 'pressure' | 'vorticity'>('speed');
+  const [vizMode, setVizMode] = useState<'speed' | 'pressure' | 'vorticity' | 'stream'>('speed');
 
   const run = useCallback(() => {
     setComputing(true);
-    // Run async to not block UI
     setTimeout(() => {
-      const res = solveCavity(Nx, Nx, Re, 1.0, nIter, 1.2);
+      const res = solveCavity(Nx, Nx, Re, 1.0, nIter, 1.5);
       setResult(res);
       setComputing(false);
     }, 20);
@@ -1002,25 +1033,25 @@ function CavitySandbox() {
 
   const plotData = useMemo(() => {
     if (!result) return null;
-    const { u, v, p, Nx: nx, Ny: ny, Lx: lx, Ly: ly } = result;
-    const dx = lx / nx, dy = ly / ny;
-    const x = Array.from({ length: nx }, (_, i) => (i + 0.5) * dx);
-    const y = Array.from({ length: ny }, (_, j) => (j + 0.5) * dy);
+    const { u, v, p, w, psi, Nx: nx, Ny: ny, Lx: lx, Ly: ly } = result;
+    const dx = lx / (nx - 1), dy = ly / (ny - 1);
+    // Plot interior cells for better color range
+    const x = Array.from({ length: nx - 2 }, (_, i) => (i + 1) * dx);
+    const y = Array.from({ length: ny - 2 }, (_, j) => (j + 1) * dy);
     const z: number[][] = [];
 
-    for (let j = 0; j < ny; j++) {
+    for (let j = 1; j < ny - 1; j++) {
       const row: number[] = [];
-      for (let i = 0; i < nx; i++) {
+      for (let i = 1; i < nx - 1; i++) {
         const c = j * nx + i;
         if (vizMode === 'speed') {
           row.push(Math.sqrt(u[c] * u[c] + v[c] * v[c]));
         } else if (vizMode === 'pressure') {
           row.push(p[c]);
+        } else if (vizMode === 'stream') {
+          row.push(psi[c]);
         } else {
-          // Vorticity ∂v/∂x - ∂u/∂y
-          const dvdx = i > 0 && i < nx - 1 ? (v[j * nx + i + 1] - v[j * nx + i - 1]) / (2 * dx) : 0;
-          const dudy = j > 0 && j < ny - 1 ? (u[(j + 1) * nx + i] - u[(j - 1) * nx + i]) / (2 * dy) : 0;
-          row.push(dvdx - dudy);
+          row.push(w[c]); // vorticity directly from solver
         }
       }
       z.push(row);
@@ -1028,6 +1059,9 @@ function CavitySandbox() {
 
     return { z, x, y };
   }, [result, vizMode]);
+
+  const colorscale = vizMode === 'vorticity' ? 'RdBu' : vizMode === 'stream' ? 'Blues' : vizMode === 'pressure' ? 'RdBu' : 'Viridis';
+  const useZmid = vizMode === 'vorticity' || vizMode === 'pressure';
 
   return (
     <div className="flex flex-row-reverse h-full min-h-0">
@@ -1037,10 +1071,15 @@ function CavitySandbox() {
         </div>
         <Slider label="N (pro Achse)" value={Nx} min={15} max={60} step={5} onChange={setNx} color="violet" />
         <Slider label="Reynolds Re" value={Re} min={10} max={1000} step={10} onChange={setRe} color="violet" />
-        <Slider label="Iterationen" value={nIter} min={100} max={3000} step={100} onChange={setNIter} color="violet" />
+        <Slider label="Iterationen" value={nIter} min={200} max={5000} step={100} onChange={setNIter} color="violet" />
         <SelectField label="Anzeige" value={vizMode}
-          options={[{ v: 'speed', l: 'Geschwindigkeit' }, { v: 'pressure', l: 'Druck' }, { v: 'vorticity', l: 'Wirbelstärke' }]}
-          onChange={v => setVizMode(v as 'speed' | 'pressure' | 'vorticity')} />
+          options={[
+            { v: 'speed', l: 'Geschwindigkeit' },
+            { v: 'pressure', l: 'Druck' },
+            { v: 'vorticity', l: 'Wirbelstärke' },
+            { v: 'stream', l: 'Stromfunktion' },
+          ]}
+          onChange={v => setVizMode(v as 'speed' | 'pressure' | 'vorticity' | 'stream')} />
         <button onClick={run} disabled={computing}
           className={`w-full py-2 rounded-lg font-semibold text-xs transition-colors ${
             computing ? 'bg-gray-700 text-gray-500' : 'bg-violet-600 hover:bg-violet-500 text-white'
@@ -1067,9 +1106,11 @@ function CavitySandbox() {
                 x: plotData.x,
                 y: plotData.y,
                 type: 'heatmap',
-                colorscale: vizMode === 'vorticity' ? 'RdBu' : 'Viridis',
-                colorbar: { thickness: 12, len: 0.8, tickfont: { size: 9, color: '#6b7280' } },
+                colorscale,
+                colorbar: { thickness: 12, len: 0.8, tickfont: { size: 9, color: '#6b7280' }, exponentformat: 'e' },
                 reversescale: vizMode === 'vorticity',
+                zsmooth: 'best',
+                ...(useZmid ? { zmid: 0 } : {}),
               }] as Plotly.Data[]}
               layout={{
                 ...PLOT_LAYOUT_BASE,
