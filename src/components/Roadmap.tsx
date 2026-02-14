@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { curriculum, LessonNode, getAllLessons } from '@/curriculum/curriculum';
 import Icon from '@/components/Icons';
+import FormulaJourney from '@/components/FormulaJourney';
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    Roadmap — a vertical learning path, like a subway / skill-tree.
@@ -39,34 +40,88 @@ export default function Roadmap({ onOpen, completed, onOpenFullSim, onOpenQuiz }
   const done = completed.size;
   const pct = total > 0 ? Math.round((done / total) * 100) : 0;
 
+  // ── Scroll progress for FormulaJourney ────────────────────
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [scrollProgress, setScrollProgress] = useState(0);
+
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const maxScroll = el.scrollHeight - el.clientHeight;
+    if (maxScroll <= 0) { setScrollProgress(0); return; }
+    setScrollProgress(Math.min(1, el.scrollTop / maxScroll));
+  }, []);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.addEventListener('scroll', handleScroll, { passive: true });
+    return () => el.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
+
   return (
-    <div className="h-dvh w-screen overflow-y-auto overflow-x-hidden bg-gray-950 roadmap-scroll">
+    <div ref={scrollRef} className="h-dvh w-screen overflow-y-auto overflow-x-hidden bg-gray-950 roadmap-scroll">
       {/* ── subtle background dots ─────────────────────────── */}
       <div className="fixed inset-0 pointer-events-none opacity-[0.03]"
         style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
 
-      {/* ── top area ───────────────────────────────────────── */}
-      <div className="relative z-10 max-w-3xl mx-auto pt-12 sm:pt-20 pb-6 px-4 sm:px-6">
-        <h1 className="text-2xl sm:text-4xl font-bold tracking-tight text-white">
-          CFD Lab
-        </h1>
-        <p className="mt-2 text-gray-500 text-sm leading-relaxed max-w-md">
-          Interaktiver Lernpfad — von den Grundlagen bis zur 2D-Simulation.
-          Klicke auf eine Lektion um loszulegen.
-        </p>
-
-        {/* progress */}
-        <div className="mt-5 flex items-center gap-3">
-          <div className="flex-1 h-1 rounded-full bg-gray-800 overflow-hidden">
-            <div className="h-full bg-cyan-500 rounded-full transition-all duration-700 ease-out"
-              style={{ width: `${pct}%` }} />
-          </div>
-          <span className="text-xs text-gray-600 tabular-nums">{done}/{total}</span>
+      {/* ── Floating formula journey (desktop, sticky) ─────── */}
+      <div className="hidden lg:block fixed right-[6vw] top-0 bottom-0 w-[28vw] z-20 pointer-events-none">
+        <div className="absolute top-1/2 -translate-y-1/2 w-full px-1">
+          <FormulaJourney scrollProgress={scrollProgress} />
         </div>
       </div>
 
+      {/* ── Fixed header bar (stationary) ─────────────────── */}
+      <div className="fixed top-0 left-0 right-0 z-30 bg-gray-950/80 backdrop-blur-md border-b border-gray-800/50">
+        <div className="flex items-center py-2.5 px-4 sm:px-6">
+          {/* center: title + start + progress (absolute center) */}
+          <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-3">
+            <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-white">
+              CFD Lab
+            </h1>
+            <button
+              onClick={() => { const first = allLessons.find(l => l.available && !completed.has(l.id)); if (first) onOpen(first.id); }}
+              className="px-3 py-1 rounded-full bg-cyan-500/20 border border-cyan-500/40 text-cyan-400 text-[11px] font-medium hover:bg-cyan-500/30 transition-colors"
+            >
+              Starten &rarr;
+            </button>
+            <div className="hidden sm:flex items-center gap-2 w-28">
+              <div className="flex-1 h-1 rounded-full bg-gray-800 overflow-hidden">
+                <div className="h-full bg-cyan-500 rounded-full transition-all duration-700 ease-out"
+                  style={{ width: `${pct}%` }} />
+              </div>
+              <span className="text-[10px] text-gray-600 tabular-nums">{done}/{total}</span>
+            </div>
+          </div>
+
+          {/* right: toggle group — same style as lesson view toggles */}
+          <div className="ml-auto flex items-center gap-0.5 bg-gray-900/80 rounded-lg p-0.5">
+            <button
+              onClick={onOpenFullSim}
+              title="Simulations-Labor"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-gray-500 hover:text-gray-300 hover:bg-gray-800/60 transition-colors text-[11px] font-medium"
+            >
+              <Icon name="chart-line" className="text-cyan-400" size={13} />
+              <span className="hidden sm:inline">Sim-Lab</span>
+            </button>
+            <button
+              onClick={onOpenQuiz}
+              title="Quiz-Trainer"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-gray-500 hover:text-gray-300 hover:bg-gray-800/60 transition-colors text-[11px] font-medium"
+            >
+              <Icon name="help-circle" className="text-amber-400" size={13} />
+              <span className="hidden sm:inline">Quiz</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* spacer for fixed header */}
+      <div className="h-14" />
+
       {/* ── vertical path ──────────────────────────────────── */}
-      <div className="relative z-10 max-w-3xl mx-auto pb-32">
+      <div className="relative z-10 lg:w-[64vw] max-w-3xl mx-auto lg:mx-0 lg:ml-[8vw] pb-32">
         {/* trunk line */}
         <div className="absolute left-[15px] sm:left-[23px] top-0 bottom-0 w-px bg-gradient-to-b from-gray-800 via-gray-800 to-transparent ml-6" />
 
@@ -81,30 +136,9 @@ export default function Roadmap({ onOpen, completed, onOpenFullSim, onOpenQuiz }
           />
         ))}
 
-        {/* Full simulation button at bottom */}
-        <div className="pl-10 sm:pl-16 pr-4 sm:pr-6 py-4">
-          <button
-            onClick={onOpenFullSim}
-            className="w-full py-3 rounded-lg border border-gray-700/60 bg-gray-900/60 hover:bg-gray-800/80 hover:border-gray-600 text-gray-400 hover:text-gray-200 transition-all duration-200 text-sm font-medium flex items-center justify-center gap-2"
-          >
-            <Icon name="chart-line" className="text-cyan-400" size={16} />
-            Simulations-Labor
-            <span className="text-gray-600 text-xs">&rarr;</span>
-          </button>
-        </div>
-
-        {/* Quiz trainer button */}
-        <div className="pl-10 sm:pl-16 pr-4 sm:pr-6 pb-8">
-          <button
-            onClick={onOpenQuiz}
-            className="w-full py-3 rounded-lg border border-gray-700/60 bg-gray-900/60 hover:bg-gray-800/80 hover:border-gray-600 text-gray-400 hover:text-gray-200 transition-all duration-200 text-sm font-medium flex items-center justify-center gap-2"
-          >
-            <Icon name="help-circle" className="text-amber-400" size={16} />
-            Quiz-Trainer
-            <span className="text-gray-600 text-xs">&rarr;</span>
-          </button>
-        </div>
       </div>
+
+
     </div>
   );
 }
