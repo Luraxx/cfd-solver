@@ -15,6 +15,8 @@ export interface LearningStep {
   highlight?: { type: 'tip' | 'warning' | 'key'; text: string };
   /** Connection to code — which editable block to show */
   codeBlockId?: string;
+  /** Embedded interactive component id */
+  interactiveComponent?: string;
 }
 
 export interface LessonContent {
@@ -469,6 +471,12 @@ export const lessonContents: Record<string, LessonContent> = {
       {
         title: 'Alle Schemata vergleichen',
         text: 'Nutze den Vergleichsmodus: Wähle links das Hauptschema und ein Vergleichsschema. Beide laufen mit identischen Parametern.',
+      },
+      {
+        title: 'Face-Interpolation im Vergleich',
+        text: 'Der Kern jedes Schemas: Wie wird der Wert $\\phi_f$ an der Zellfläche aus den Zellmittelpunkten berechnet?\n\n• **UDS** nimmt immer den Upwind-Wert: $\\phi_f = \\phi_P$ — stabil, aber diffusiv\n• **CDS** mittelt links und rechts: $\\phi_f = \\frac{1}{2}(\\phi_P + \\phi_E)$ — genau, aber kann oszillieren\n• **TVD** blendet mit Limiter: $\\phi_f = \\phi_P + \\frac{1}{2}\\psi(r)(\\phi_E - \\phi_P)$ — Kompromiss\n\nZiehe die Zellwerte in der Grafik und beobachte, wie unterschiedlich die Face-Werte ausfallen!',
+        interactiveComponent: 'face-interpolation',
+        highlight: { type: 'key', text: 'Besonders beim Sprung (Preset "Sprung") siehst du den Unterschied: UDS bleibt am Upwind-Wert, CDS springt zur Mitte, TVD passt sich an.' },
       },
       {
         title: 'Was du beobachten solltest',

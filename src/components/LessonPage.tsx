@@ -10,6 +10,9 @@ import SimSandbox from '@/components/SimSandbox';
 import QuizPanel from '@/components/QuizPanel';
 import Icon, { HighlightIcon } from '@/components/Icons';
 import NotationGlossary from '@/components/NotationGlossary';
+import dynamic from 'next/dynamic';
+
+const FaceInterpolationGraphic = dynamic(() => import('@/components/FaceInterpolationGraphic'), { ssr: false });
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    LessonPage — Full-screen lesson experience.
@@ -342,6 +345,11 @@ function StepBlock({ step, index, isActive }: { step: LearningStep; index: numbe
       <div className="text-[13px] text-gray-400 leading-relaxed mt-2">
         <FormattedText text={step.text} />
       </div>
+
+      {/* Interactive component */}
+      {step.interactiveComponent === 'face-interpolation' && (
+        <FaceInterpolationGraphic />
+      )}
 
       {/* Highlight box */}
       {step.highlight && (
