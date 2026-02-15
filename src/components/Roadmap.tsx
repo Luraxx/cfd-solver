@@ -19,6 +19,7 @@ interface Props {
   completed: Set<string>;
   onOpenFullSim: () => void;
   onOpenQuiz: () => void;
+  onOpenMesh: () => void;
 }
 
 // Accent colour palette per category index
@@ -33,7 +34,7 @@ const COLORS = [
   { bg: 'bg-pink-500/10',   border: 'border-pink-500/40',   text: 'text-pink-400',   dot: 'bg-pink-400',   glow: 'shadow-pink-500/20' },
 ];
 
-export default function Roadmap({ onOpen, completed, onOpenFullSim, onOpenQuiz }: Props) {
+export default function Roadmap({ onOpen, completed, onOpenFullSim, onOpenQuiz, onOpenMesh }: Props) {
   const categories = curriculum.children ?? [];
   const allLessons = getAllLessons();
   const total = allLessons.filter(l => l.available).length;
@@ -66,8 +67,8 @@ export default function Roadmap({ onOpen, completed, onOpenFullSim, onOpenQuiz }
         style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
 
       {/* ── Floating formula journey (desktop, sticky) ─────── */}
-      <div className="hidden lg:block fixed right-[6vw] top-0 bottom-0 w-[28vw] z-20 pointer-events-none">
-        <div className="absolute top-1/2 -translate-y-1/2 w-full px-1">
+      <div className="hidden lg:block fixed right-[2vw] top-14 bottom-0 w-[36vw] z-20 pointer-events-none">
+        <div className="h-full w-full px-1">
           <FormulaJourney scrollProgress={scrollProgress} />
         </div>
       </div>
@@ -113,6 +114,14 @@ export default function Roadmap({ onOpen, completed, onOpenFullSim, onOpenQuiz }
               <Icon name="help-circle" className="text-amber-400" size={13} />
               <span className="hidden sm:inline">Quiz</span>
             </button>
+            <button
+              onClick={onOpenMesh}
+              title="Gittertypen"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-gray-500 hover:text-gray-300 hover:bg-gray-800/60 transition-colors text-[11px] font-medium"
+            >
+              <Icon name="grid-square" className="text-emerald-400" size={13} />
+              <span className="hidden sm:inline">Gitter</span>
+            </button>
           </div>
         </div>
       </div>
@@ -121,7 +130,7 @@ export default function Roadmap({ onOpen, completed, onOpenFullSim, onOpenQuiz }
       <div className="h-14" />
 
       {/* ── vertical path ──────────────────────────────────── */}
-      <div className="relative z-10 lg:w-[64vw] max-w-3xl mx-auto lg:mx-0 lg:ml-[8vw] pb-32">
+      <div className="relative z-10 lg:w-[58vw] max-w-3xl mx-auto lg:mx-0 lg:ml-[2vw] pb-32">
         {/* trunk line */}
         <div className="absolute left-[15px] sm:left-[23px] top-0 bottom-0 w-px bg-gradient-to-b from-gray-800 via-gray-800 to-transparent ml-6" />
 
@@ -137,6 +146,7 @@ export default function Roadmap({ onOpen, completed, onOpenFullSim, onOpenQuiz }
         ))}
 
       </div>
+
 
 
     </div>

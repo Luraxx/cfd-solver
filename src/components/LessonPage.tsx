@@ -13,6 +13,7 @@ import NotationGlossary from '@/components/NotationGlossary';
 import dynamic from 'next/dynamic';
 
 const FaceInterpolationGraphic = dynamic(() => import('@/components/FaceInterpolationGraphic'), { ssr: false });
+const MeshTypesViz = dynamic(() => import('@/components/MeshTypesViz'), { ssr: false });
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    LessonPage — Full-screen lesson experience.
@@ -236,6 +237,13 @@ export default function LessonPage({ lessonId, onBack, onNavigate, onComplete }:
                 <StepBlock step={step} index={i} isActive={i === activeStep} />
               </div>
             ))}
+
+            {/* Mesh visualization for Gitter & Geometrie lesson */}
+            {lessonId === 'basics-mesh' && (
+              <div className="mb-10">
+                <MeshTypesViz />
+              </div>
+            )}
 
             {/* Spacer so content doesn't get hidden behind fixed bottom bar */}
             <div className="h-20" />

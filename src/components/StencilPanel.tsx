@@ -138,6 +138,7 @@ export default function StencilPanel() {
             </span>
           </div>
         </div>
+
       </div>
     </div>
   );

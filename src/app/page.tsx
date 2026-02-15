@@ -6,6 +6,7 @@ import Roadmap from '@/components/Roadmap';
 import LessonPage from '@/components/LessonPage';
 import FullSimulation from '@/components/FullSimulation';
 import QuizMode from '@/components/QuizMode';
+import MeshTypesViz from '@/components/MeshTypesViz';
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    Root page — three states:
@@ -14,7 +15,7 @@ import QuizMode from '@/components/QuizMode';
    3. FullSimulation (full FVM sandbox)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
-type View = { kind: 'map' } | { kind: 'lesson'; id: string } | { kind: 'fullsim'; returnTo: string | null } | { kind: 'quiz' };
+type View = { kind: 'map' } | { kind: 'lesson'; id: string } | { kind: 'fullsim'; returnTo: string | null } | { kind: 'quiz' } | { kind: 'mesh' };
 
 const STORAGE_KEY = 'cfd-lab-completed';
 
@@ -79,6 +80,25 @@ export default function Home() {
     );
   }
 
+  // ── Mesh types visualization ─────────────────────────────────
+  if (view.kind === 'mesh') {
+    return (
+      <div className="page-enter min-h-dvh bg-gray-950">
+        <div className="fixed top-0 left-0 right-0 z-30 bg-gray-950/80 backdrop-blur-md border-b border-gray-800/50">
+          <div className="flex items-center py-2.5 px-4 sm:px-6">
+            <button onClick={goToMap} className="flex items-center gap-1.5 text-gray-500 hover:text-gray-300 text-xs transition-colors">
+              ← Zurück
+            </button>
+            <h1 className="absolute left-1/2 -translate-x-1/2 text-lg font-bold text-white">Gittertypen</h1>
+          </div>
+        </div>
+        <div className="pt-14">
+          <MeshTypesViz />
+        </div>
+      </div>
+    );
+  }
+
   // ── Lesson mode ──────────────────────────────────────────────
   if (view.kind === 'lesson') {
     return (
@@ -98,7 +118,7 @@ export default function Home() {
   // ── Roadmap (landing) ────────────────────────────────────────
   return (
     <div className="page-enter">
-      <Roadmap onOpen={openLesson} completed={completed} onOpenFullSim={() => openFullSim(null)} onOpenQuiz={() => setView({ kind: 'quiz' })} />
+      <Roadmap onOpen={openLesson} completed={completed} onOpenFullSim={() => openFullSim(null)} onOpenQuiz={() => setView({ kind: 'quiz' })} onOpenMesh={() => setView({ kind: 'mesh' })} />
     </div>
   );
 }
