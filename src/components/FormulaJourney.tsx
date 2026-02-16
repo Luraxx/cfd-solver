@@ -48,12 +48,14 @@ interface Stage {
   annotation: string;
   color: string;
   derivation?: DerivStep[];
+  byDim?: Partial<Record<DimKey, { formula?: string; annotation?: string }>>;
 }
 
 type MethodKey = 'FVM' | 'FDM';
 type TimeKey = 'euler-exp' | 'euler-imp' | 'crank-nic';
 type FVMScheme = 'UDS' | 'CDS' | 'TVD';
 type FDMScheme = 'backward' | 'central' | 'forward';
+type DimKey = '1D' | '2D' | '3D' | 'allg';
 
 /* ═══════════════════════════════════════════════════════════════════
    FVM EARLY STAGES (0-3) — multi-D, ∇ notation, ṁ_f, + Quelle
@@ -66,6 +68,11 @@ const FVM_EARLY: Stage[] = [
     formula: `\\frac{\\partial (\\rho\\phi)}{\\partial t} + \\nabla\\!\\cdot\\!(\\rho\\,\\vec{u}\\,\\phi) = \\nabla\\!\\cdot\\!(\\Gamma\\,\\nabla\\phi) + S_\\phi`,
     annotation: 'Die allgemeine Transportgleichung — mit ρ in transientem und konvektivem Term.',
     color: C.white,
+    byDim: {
+      '1D': { formula: `\\frac{\\partial(\\rho\\phi)}{\\partial t} + \\frac{\\partial(\\rho u\\phi)}{\\partial x} = \\frac{\\partial}{\\partial x}\\!\\left(\\Gamma\\frac{\\partial\\phi}{\\partial x}\\right) + S_\\phi`, annotation: '1D-Transportgleichung — eine Raumrichtung x.' },
+      '2D': { formula: `\\frac{\\partial(\\rho\\phi)}{\\partial t} + \\frac{\\partial(\\rho u\\phi)}{\\partial x} + \\frac{\\partial(\\rho v\\phi)}{\\partial y} = \\frac{\\partial}{\\partial x}\\!\\left(\\Gamma\\frac{\\partial\\phi}{\\partial x}\\right) + \\frac{\\partial}{\\partial y}\\!\\left(\\Gamma\\frac{\\partial\\phi}{\\partial y}\\right) + S_\\phi`, annotation: '2D-Transportgleichung — Konvektion und Diffusion in x und y.' },
+      '3D': { formula: `\\frac{\\partial(\\rho\\phi)}{\\partial t} + \\frac{\\partial(\\rho u\\phi)}{\\partial x} + \\frac{\\partial(\\rho v\\phi)}{\\partial y} + \\frac{\\partial(\\rho w\\phi)}{\\partial z} = \\frac{\\partial}{\\partial x}\\!\\left(\\Gamma\\frac{\\partial\\phi}{\\partial x}\\right) + \\frac{\\partial}{\\partial y}\\!\\left(\\Gamma\\frac{\\partial\\phi}{\\partial y}\\right) + \\frac{\\partial}{\\partial z}\\!\\left(\\Gamma\\frac{\\partial\\phi}{\\partial z}\\right) + S_\\phi`, annotation: '3D-Transportgleichung — alle drei Raumrichtungen.' },
+    },
     derivation: [
       { title: 'Massenerhaltung (Kontinuität)',
         tex: '\\frac{\\partial \\rho}{\\partial t} + \\nabla\\!\\cdot\\!(\\rho\\,\\vec{u}) = 0',
@@ -87,6 +94,11 @@ const FVM_EARLY: Stage[] = [
     formula: `${tc(C.cyan, '\\int_V')} \\frac{\\partial (\\rho\\phi)}{\\partial t}\\,${tc(C.cyan, 'dV')} + ${tc(C.cyan, '\\int_V')} \\nabla\\!\\cdot\\!(\\rho\\,\\vec{u}\\,\\phi)\\,${tc(C.cyan, 'dV')} = ${tc(C.cyan, '\\int_V')} \\nabla\\!\\cdot\\!(\\Gamma\\,\\nabla\\phi)\\,${tc(C.cyan, 'dV')} + ${tc(C.cyan, '\\int_V')} S_\\phi\\,${tc(C.cyan, 'dV')}`,
     annotation: 'Jeden Term über ein Kontrollvolumen V integrieren.',
     color: C.cyan,
+    byDim: {
+      '1D': { formula: `${tc(C.cyan, '\\int_{x_w}^{x_e}')} \\frac{\\partial(\\rho\\phi)}{\\partial t}\\,${tc(C.cyan, 'dx')} + ${tc(C.cyan, '\\int_{x_w}^{x_e}')} \\frac{\\partial(\\rho u\\phi)}{\\partial x}\\,${tc(C.cyan, 'dx')} = ${tc(C.cyan, '\\int_{x_w}^{x_e}')} \\frac{\\partial}{\\partial x}\\!\\left(\\Gamma\\frac{\\partial\\phi}{\\partial x}\\right)${tc(C.cyan, 'dx')} + ${tc(C.cyan, '\\int_{x_w}^{x_e}')} S_\\phi\\,${tc(C.cyan, 'dx')}`, annotation: 'Integration über ein 1D-Kontrollvolumen [x_w, x_e].' },
+      '2D': { formula: `${tc(C.cyan, '\\int_A')} \\frac{\\partial (\\rho\\phi)}{\\partial t}\\,${tc(C.cyan, 'dA')} + ${tc(C.cyan, '\\int_A')} \\left(\\frac{\\partial(\\rho u\\phi)}{\\partial x} + \\frac{\\partial(\\rho v\\phi)}{\\partial y}\\right)${tc(C.cyan, 'dA')} = ${tc(C.cyan, '\\int_A')} \\left(\\frac{\\partial}{\\partial x}(\\Gamma\\frac{\\partial\\phi}{\\partial x}) + \\frac{\\partial}{\\partial y}(\\Gamma\\frac{\\partial\\phi}{\\partial y})\\right)${tc(C.cyan, 'dA')} + ${tc(C.cyan, '\\int_A')} S_\\phi\\,${tc(C.cyan, 'dA')}`, annotation: 'Integration über ein 2D-Kontrollvolumen (Fläche A). Konvektion + Diffusion in x und y.' },
+      '3D': { formula: `${tc(C.cyan, '\\int_V')} \\frac{\\partial (\\rho\\phi)}{\\partial t}\\,${tc(C.cyan, 'dV')} + ${tc(C.cyan, '\\int_V')} \\left(\\frac{\\partial(\\rho u\\phi)}{\\partial x} + \\frac{\\partial(\\rho v\\phi)}{\\partial y} + \\frac{\\partial(\\rho w\\phi)}{\\partial z}\\right)${tc(C.cyan, 'dV')} = ${tc(C.cyan, '\\int_V')} \\left(\\sum_k \\frac{\\partial}{\\partial x_k}(\\Gamma\\frac{\\partial\\phi}{\\partial x_k})\\right)${tc(C.cyan, 'dV')} + ${tc(C.cyan, '\\int_V')} S_\\phi\\,${tc(C.cyan, 'dV')}`, annotation: 'Integration über ein 3D-Kontrollvolumen (Hexaeder). Alle drei Raumrichtungen.' },
+    },
     derivation: [
       { title: 'Warum integrieren?',
         tex: '\\text{PDE gilt punktweise} \\;\\Rightarrow\\; \\text{Integration} \\Rightarrow \\text{gilt im Mittel über } V',
@@ -105,6 +117,11 @@ const FVM_EARLY: Stage[] = [
     formula: `\\int_V \\frac{\\partial (\\rho\\phi)}{\\partial t}\\,dV + ${tc(C.violet, '\\oint_S')} \\rho\\,\\phi\\,(\\vec{u}${tc(C.violet, '\\cdot\\vec{n}')})\\,${tc(C.violet, 'dA')} = ${tc(C.violet, '\\oint_S')} \\Gamma\\,(\\nabla\\phi${tc(C.violet, '\\cdot\\vec{n}')})\\,${tc(C.violet, 'dA')} + \\int_V S_\\phi\\,dV`,
     annotation: 'Divergenz-Integrale → Oberflächenintegrale. Konvektion: ρφ(u⃗·n⃗), Diffusion: Γ(∇φ·n⃗).',
     color: C.violet,
+    byDim: {
+      '1D': { formula: `\\rho_P V_P\\frac{\\partial\\phi_P}{\\partial t} + ${tc(C.violet, '\\left[\\rho u\\phi\\right]_{x_w}^{x_e}')} = ${tc(C.violet, '\\left[\\Gamma\\frac{\\partial\\phi}{\\partial x}\\right]_{x_w}^{x_e}')} + \\int_{x_w}^{x_e} S_\\phi\\,dx`, annotation: 'In 1D = Hauptsatz der Analysis: ∫ ∂F/∂x dx = F(x_e) − F(x_w).' },
+      '2D': { formula: `\\int_A \\frac{\\partial (\\rho\\phi)}{\\partial t}\\,dA + ${tc(C.violet, '\\oint_C')} \\rho\\,\\phi\\,(\\vec{u}${tc(C.violet, '\\cdot\\hat{n}')})\\,${tc(C.violet, 'dl')} = ${tc(C.violet, '\\oint_C')} \\Gamma\\,(\\nabla\\phi${tc(C.violet, '\\cdot\\hat{n}')})\\,${tc(C.violet, 'dl')} + \\int_A S_\\phi\\,dA`, annotation: 'Gauß in 2D: 4 Kanten (e, w, n, s). Linienintegral ∮_C über den Rand.' },
+      '3D': { formula: `\\int_V \\frac{\\partial (\\rho\\phi)}{\\partial t}\\,dV + ${tc(C.violet, '\\oint_S')} \\rho\\,\\phi\\,(\\vec{u}${tc(C.violet, '\\cdot\\vec{n}')})\\,${tc(C.violet, 'dA')} = ${tc(C.violet, '\\oint_S')} \\Gamma\\,(\\nabla\\phi${tc(C.violet, '\\cdot\\vec{n}')})\\,${tc(C.violet, 'dA')} + \\int_V S_\\phi\\,dV`, annotation: 'Gauß in 3D: 6 Flächen (e, w, n, s, t, b). Oberflächenintegral ∮_S.' },
+    },
     derivation: [
       { title: 'Gauß\u2019scher Divergenzsatz',
         tex: '\\int_V \\nabla\\!\\cdot\\!\\vec{F}\\,dV = \\oint_S \\vec{F}\\cdot\\vec{n}\\,dA',
@@ -126,6 +143,11 @@ const FVM_EARLY: Stage[] = [
     formula: `${tc(C.amber, '\\rho_P V_P')}\\frac{\\partial \\phi_P}{\\partial t} + ${tc(C.amber, '\\sum_f')} \\dot{m}_f\\,\\phi_f = ${tc(C.amber, '\\sum_f')} \\Gamma_f A_f\\,(\\nabla\\phi\\!\\cdot\\!\\vec{n})_f + S_{\\phi,P}\\,${tc(C.amber, 'V_P')}`,
     annotation: 'ṁ_f = ρ_f (u⃗·n⃗)_f A_f — der Massenfluss durch Face f.',
     color: C.amber,
+    byDim: {
+      '1D': { formula: `${tc(C.amber, '\\rho_P \\Delta x')}\\frac{\\partial \\phi_P}{\\partial t} + \\dot{m}_e\\,\\phi_e - \\dot{m}_w\\,\\phi_w = \\Gamma_e\\frac{\\phi_E - \\phi_P}{\\delta x} - \\Gamma_w\\frac{\\phi_P - \\phi_W}{\\delta x} + S_{\\phi,P}\\,${tc(C.amber, '\\Delta x')}`, annotation: '2 Faces: e (rechts), w (links). V_P = Δx, A_f = 1.' },
+      '2D': { formula: `${tc(C.amber, '\\rho_P V_P')}\\frac{\\partial \\phi_P}{\\partial t} + ${tc(C.amber, '\\sum_{f \\in \\{e,w,n,s\\}}')} \\dot{m}_f\\,\\phi_f = ${tc(C.amber, '\\sum_{f \\in \\{e,w,n,s\\}}')} \\Gamma_f A_f\\,(\\nabla\\phi\\!\\cdot\\!\\vec{n})_f + S_{\\phi,P}\\,${tc(C.amber, 'V_P')}`, annotation: '4 Faces: e, w, n, s. Summe über alle Ränder der 2D-Zelle.' },
+      '3D': { formula: `${tc(C.amber, '\\rho_P V_P')}\\frac{\\partial \\phi_P}{\\partial t} + ${tc(C.amber, '\\sum_{f \\in \\{e,w,n,s,t,b\\}}')} \\dot{m}_f\\,\\phi_f = ${tc(C.amber, '\\sum_{f \\in \\{e,w,n,s,t,b\\}}')} \\Gamma_f A_f\\,(\\nabla\\phi\\!\\cdot\\!\\vec{n})_f + S_{\\phi,P}\\,${tc(C.amber, 'V_P')}`, annotation: '6 Faces: e, w, n, s, t, b. Hexaeder-Kontrollvolumen.' },
+    },
     derivation: [
       { title: 'Oberflächenintegral → Summe',
         tex: '\\oint_S \\rho\\,\\phi\\,(\\vec{u}\\cdot\\vec{n})\\,dA \\approx \\sum_f \\rho_f\\,\\phi_f\\,(\\vec{u}\\cdot\\vec{n})_f\\,A_f',
@@ -154,6 +176,11 @@ const FDM_EARLY_FIXED: Stage[] = [
     formula: `\\frac{\\partial \\phi}{\\partial t} + u\\frac{\\partial \\phi}{\\partial x} = \\Gamma \\frac{\\partial^2 \\phi}{\\partial x^2}`,
     annotation: 'Die Transportgleichung in nicht-konservativer Form (1D, u = const).',
     color: C.white,
+    byDim: {
+      '2D': { formula: `\\frac{\\partial \\phi}{\\partial t} + u\\frac{\\partial \\phi}{\\partial x} + v\\frac{\\partial \\phi}{\\partial y} = \\Gamma\\!\\left(\\frac{\\partial^2 \\phi}{\\partial x^2} + \\frac{\\partial^2 \\phi}{\\partial y^2}\\right)`, annotation: '2D-Konvektions-Diffusions-Gleichung mit u, v.' },
+      '3D': { formula: `\\frac{\\partial \\phi}{\\partial t} + u\\frac{\\partial \\phi}{\\partial x} + v\\frac{\\partial \\phi}{\\partial y} + w\\frac{\\partial \\phi}{\\partial z} = \\Gamma\\!\\left(\\frac{\\partial^2 \\phi}{\\partial x^2} + \\frac{\\partial^2 \\phi}{\\partial y^2} + \\frac{\\partial^2 \\phi}{\\partial z^2}\\right)`, annotation: '3D mit u, v, w — drei Geschwindigkeitskomponenten.' },
+      'allg': { formula: `\\frac{\\partial \\phi}{\\partial t} + \\vec{u}\\cdot\\nabla\\phi = \\Gamma\\,\\nabla^2\\phi`, annotation: 'Kompakte Vektorform. u⃗·∇φ = Konvektion, Γ∇²φ = Diffusion.' },
+    },
   },
   {
     label: 'Taylor-Reihe aufstellen',
@@ -161,6 +188,11 @@ const FDM_EARLY_FIXED: Stage[] = [
     formula: `\\phi(x\\!+\\!\\Delta x) = \\phi(x) + ${tc(C.cyan, '\\Delta x\\,\\phi\' + \\tfrac{\\Delta x^2}{2}\\,\\phi\'\' + \\tfrac{\\Delta x^3}{6}\\,\\phi\'\'\' + \\cdots')}`,
     annotation: 'Die Taylor-Entwicklung ist die Basis aller FD-Stencils.',
     color: C.cyan,
+    byDim: {
+      '2D': { annotation: 'Taylor-Entwicklung gilt in jeder Raumrichtung (x, y) unabhängig.' },
+      '3D': { annotation: 'Taylor-Entwicklung wird in x, y und z separat angewandt.' },
+      'allg': { annotation: 'Basis aller FD-Stencils — gilt in jeder Koordinatenrichtung.' },
+    },
     derivation: [
       { title: 'Taylor-Reihe Herleitung',
         tex: 'f(x+h) = \\sum_{k=0}^{\\infty} \\frac{h^k}{k!} f^{(k)}(x)',
@@ -185,6 +217,11 @@ const FDM_EARLY_FIXED: Stage[] = [
     formula: `\\frac{\\partial \\phi}{\\partial x}\\bigg|_i \\!\\approx ${tc(C.violet, '\\frac{\\Delta \\phi}{\\Delta x}')}\\,,\\quad \\frac{\\partial^2 \\phi}{\\partial x^2}\\bigg|_i \\!\\approx ${tc(C.violet, '\\frac{\\phi_{i+1} - 2\\phi_i + \\phi_{i-1}}{\\Delta x^2}')}`,
     annotation: 'Ableitungen → Differenzenquotienten. Die Stencil-Wahl bestimmt Δφ/Δx.',
     color: C.violet,
+    byDim: {
+      '2D': { formula: `\\frac{\\partial \\phi}{\\partial x}\\bigg|_{i,j} \\!\\approx ${tc(C.violet, '\\frac{\\Delta \\phi}{\\Delta x}')},\\; \\frac{\\partial \\phi}{\\partial y}\\bigg|_{i,j} \\!\\approx ${tc(C.violet, '\\frac{\\Delta \\phi}{\\Delta y}')},\\; \\nabla^2\\phi \\approx ${tc(C.violet, '\\frac{\\delta^2\\phi}{\\Delta x^2} + \\frac{\\delta^2\\phi}{\\Delta y^2}')}`, annotation: 'In 2D: Stencils in x- und y-Richtung. 5-Punkt-Laplace-Stencil.' },
+      '3D': { formula: `\\frac{\\partial \\phi}{\\partial x_k}\\bigg|_{\\vec{i}} \\!\\approx ${tc(C.violet, '\\frac{\\Delta \\phi}{\\Delta x_k}')},\\quad \\nabla^2\\phi \\approx ${tc(C.violet, '\\sum_{k=1}^{3} \\frac{\\phi_{+e_k} - 2\\phi + \\phi_{-e_k}}{\\Delta x_k^2}')}`, annotation: 'In 3D: Stencils in x, y, z. 7-Punkt-Laplace-Stern.' },
+      'allg': { formula: `\\frac{\\partial \\phi}{\\partial x_k} \\approx ${tc(C.violet, '\\frac{\\Delta \\phi}{\\Delta x_k}')},\\quad \\nabla^2\\phi \\approx ${tc(C.violet, '\\sum_k \\frac{\\delta^2\\phi}{\\Delta x_k^2}')}`, annotation: 'Stencils in jeder Koordinatenrichtung x_k.' },
+    },
     derivation: [
       { title: 'Vorwärts-Differenz (Forward)',
         tex: '\\frac{df}{dx}\\bigg|_i \\approx \\frac{f_{i+1} - f_i}{\\Delta x} + \\mathcal{O}(\\Delta x)',
@@ -210,6 +247,11 @@ const FDM_EINSETZEN: Record<FDMScheme, Stage> = {
     formula: `\\frac{\\partial \\phi_i}{\\partial t} + u\\,${tc(C.amber, '\\frac{\\phi_i - \\phi_{i-1}}{\\Delta x}')} = \\Gamma\\,${tc(C.amber, '\\frac{\\phi_{i+1} - 2\\phi_i + \\phi_{i-1}}{\\Delta x^2}')}`,
     annotation: 'Rückwärts-Differenz für ∂φ/∂x: 1. Ordnung. Entspricht Upwind bei u > 0.',
     color: C.amber,
+    byDim: {
+      '2D': { formula: `\\frac{\\partial \\phi_{i,j}}{\\partial t} + u\\,${tc(C.amber, '\\frac{\\phi_{i,j} - \\phi_{i-1,j}}{\\Delta x}')} + v\\,${tc(C.amber, '\\frac{\\phi_{i,j} - \\phi_{i,j-1}}{\\Delta y}')} = \\Gamma\\,${tc(C.amber, '\\frac{\\phi_{i+1,j} - 2\\phi_{i,j} + \\phi_{i-1,j}}{\\Delta x^2}')} + \\Gamma\\,${tc(C.amber, '\\frac{\\phi_{i,j+1} - 2\\phi_{i,j} + \\phi_{i,j-1}}{\\Delta y^2}')}`, annotation: 'Rückwärts in x und y. 2D-Stencil: 5 Punkte.' },
+      '3D': { formula: `\\frac{\\partial \\phi_{\\vec{i}}}{\\partial t} + \\sum_k u_k\\,${tc(C.amber, '\\frac{\\phi_{\\vec{i}} - \\phi_{\\vec{i}-e_k}}{\\Delta x_k}')} = \\sum_k \\Gamma\\,${tc(C.amber, '\\frac{\\phi_{\\vec{i}+e_k} - 2\\phi_{\\vec{i}} + \\phi_{\\vec{i}-e_k}}{\\Delta x_k^2}')}`, annotation: 'Rückwärts in jeder Richtung. e_k = Einheitsvektor.' },
+      'allg': { formula: `\\frac{\\partial \\phi}{\\partial t} + \\vec{u}\\cdot${tc(C.amber, '\\nabla_h^{-}\\phi')} = \\Gamma\\,${tc(C.amber, '\\nabla_h^2\\phi')}`, annotation: '∇_h^− = diskretisierter Rückwärts-Gradient.' },
+    },
   },
   central: {
     label: 'In PDE einsetzen (Zentral)',
@@ -217,6 +259,11 @@ const FDM_EINSETZEN: Record<FDMScheme, Stage> = {
     formula: `\\frac{\\partial \\phi_i}{\\partial t} + u\\,${tc(C.amber, '\\frac{\\phi_{i+1} - \\phi_{i-1}}{2\\Delta x}')} = \\Gamma\\,${tc(C.amber, '\\frac{\\phi_{i+1} - 2\\phi_i + \\phi_{i-1}}{\\Delta x^2}')}`,
     annotation: 'Zentrale Differenz für ∂φ/∂x: 2. Ordnung, instabil bei hohem Pe.',
     color: C.amber,
+    byDim: {
+      '2D': { formula: `\\frac{\\partial \\phi_{i,j}}{\\partial t} + u\\,${tc(C.amber, '\\frac{\\phi_{i+1,j} - \\phi_{i-1,j}}{2\\Delta x}')} + v\\,${tc(C.amber, '\\frac{\\phi_{i,j+1} - \\phi_{i,j-1}}{2\\Delta y}')} = \\Gamma\\,${tc(C.amber, '\\frac{\\phi_{i+1,j} - 2\\phi_{i,j} + \\phi_{i-1,j}}{\\Delta x^2}')} + \\Gamma\\,${tc(C.amber, '\\frac{\\phi_{i,j+1} - 2\\phi_{i,j} + \\phi_{i,j-1}}{\\Delta y^2}')}`, annotation: 'Zentral in x und y. 2. Ordnung in beiden Richtungen.' },
+      '3D': { formula: `\\frac{\\partial \\phi_{\\vec{i}}}{\\partial t} + \\sum_k u_k\\,${tc(C.amber, '\\frac{\\phi_{\\vec{i}+e_k} - \\phi_{\\vec{i}-e_k}}{2\\Delta x_k}')} = \\sum_k \\Gamma\\,${tc(C.amber, '\\frac{\\phi_{\\vec{i}+e_k} - 2\\phi_{\\vec{i}} + \\phi_{\\vec{i}-e_k}}{\\Delta x_k^2}')}`, annotation: 'Zentral in jeder Richtung. 2. Ordnung, aber Pe-Limit!' },
+      'allg': { formula: `\\frac{\\partial \\phi}{\\partial t} + \\vec{u}\\cdot${tc(C.amber, '\\nabla_h^{c}\\phi')} = \\Gamma\\,${tc(C.amber, '\\nabla_h^2\\phi')}`, annotation: '∇_h^c = zentraler diskreter Gradient.' },
+    },
   },
   forward: {
     label: 'In PDE einsetzen (Vorwärts)',
@@ -224,6 +271,11 @@ const FDM_EINSETZEN: Record<FDMScheme, Stage> = {
     formula: `\\frac{\\partial \\phi_i}{\\partial t} + u\\,${tc(C.amber, '\\frac{\\phi_{i+1} - \\phi_i}{\\Delta x}')} = \\Gamma\\,${tc(C.amber, '\\frac{\\phi_{i+1} - 2\\phi_i + \\phi_{i-1}}{\\Delta x^2}')}`,
     annotation: 'Vorwärts-Differenz: Downwind bei u > 0, oft instabil.',
     color: C.amber,
+    byDim: {
+      '2D': { formula: `\\frac{\\partial \\phi_{i,j}}{\\partial t} + u\\,${tc(C.amber, '\\frac{\\phi_{i+1,j} - \\phi_{i,j}}{\\Delta x}')} + v\\,${tc(C.amber, '\\frac{\\phi_{i,j+1} - \\phi_{i,j}}{\\Delta y}')} = \\Gamma\\,${tc(C.amber, '\\frac{\\phi_{i+1,j} - 2\\phi_{i,j} + \\phi_{i-1,j}}{\\Delta x^2}')} + \\Gamma\\,${tc(C.amber, '\\frac{\\phi_{i,j+1} - 2\\phi_{i,j} + \\phi_{i,j-1}}{\\Delta y^2}')}`, annotation: 'Vorwärts in x und y. Downwind — oft instabil.' },
+      '3D': { formula: `\\frac{\\partial \\phi_{\\vec{i}}}{\\partial t} + \\sum_k u_k\\,${tc(C.amber, '\\frac{\\phi_{\\vec{i}+e_k} - \\phi_{\\vec{i}}}{\\Delta x_k}')} = \\sum_k \\Gamma\\,${tc(C.amber, '\\frac{\\phi_{\\vec{i}+e_k} - 2\\phi_{\\vec{i}} + \\phi_{\\vec{i}-e_k}}{\\Delta x_k^2}')}`, annotation: 'Vorwärts in jeder Richtung. 1. Ordnung, Downwind.' },
+      'allg': { formula: `\\frac{\\partial \\phi}{\\partial t} + \\vec{u}\\cdot${tc(C.amber, '\\nabla_h^{+}\\phi')} = \\Gamma\\,${tc(C.amber, '\\nabla_h^2\\phi')}`, annotation: '∇_h^+ = diskreter Vorwärts-Gradient.' },
+    },
   },
 };
 
@@ -298,6 +350,11 @@ const FDM_SCHEMA: Record<FDMScheme, Stage> = {
     formula: `\\frac{\\partial\\phi}{\\partial x}\\bigg|_i \\approx ${tc(C.rose, '\\frac{\\phi_i - \\phi_{i-1}}{\\Delta x}')} + \\mathcal{O}(\\Delta x)`,
     annotation: '1. Ordnung — nutzt φ_i und φ_{i−1}. Wirkt wie Upwind bei u > 0.',
     color: C.rose,
+    byDim: {
+      '2D': { formula: `\\frac{\\partial\\phi}{\\partial x}\\bigg|_{i,j} \\approx ${tc(C.rose, '\\frac{\\phi_{i,j} - \\phi_{i-1,j}}{\\Delta x}')},\\; \\frac{\\partial\\phi}{\\partial y}\\bigg|_{i,j} \\approx ${tc(C.rose, '\\frac{\\phi_{i,j} - \\phi_{i,j-1}}{\\Delta y}')} + \\mathcal{O}(\\Delta x, \\Delta y)`, annotation: 'Rückwärts-Differenz in x und y: 1. Ordnung in beiden Richtungen.' },
+      '3D': { formula: `\\frac{\\partial\\phi}{\\partial x_k}\\bigg|_{\\vec{i}} \\approx ${tc(C.rose, '\\frac{\\phi_{\\vec{i}} - \\phi_{\\vec{i}-e_k}}{\\Delta x_k}')} + \\mathcal{O}(\\Delta x_k),\\; k = 1,2,3`, annotation: 'Rückwärts-Differenz in jeder Raumrichtung (x, y, z).' },
+      'allg': { formula: `${tc(C.rose, '\\nabla_h^{-}\\phi')} = \\text{Rückwärts-Differenz},\\quad \\mathcal{O}(\\Delta x)`, annotation: 'Kompakte Notation: ∇_h^− = diskreter Rückwärts-Gradient. 1. Ordnung.' },
+    },
   },
   central: {
     label: 'Zentrale Differenz',
@@ -305,6 +362,11 @@ const FDM_SCHEMA: Record<FDMScheme, Stage> = {
     formula: `\\frac{\\partial\\phi}{\\partial x}\\bigg|_i \\approx ${tc(C.rose, '\\frac{\\phi_{i+1} - \\phi_{i-1}}{2\\,\\Delta x}')} + \\mathcal{O}(\\Delta x^2)`,
     annotation: '2. Ordnung — genauer, aber bei starker Konvektion instabil.',
     color: C.rose,
+    byDim: {
+      '2D': { formula: `\\frac{\\partial\\phi}{\\partial x}\\bigg|_{i,j} \\approx ${tc(C.rose, '\\frac{\\phi_{i+1,j} - \\phi_{i-1,j}}{2\\Delta x}')},\\; \\frac{\\partial\\phi}{\\partial y}\\bigg|_{i,j} \\approx ${tc(C.rose, '\\frac{\\phi_{i,j+1} - \\phi_{i,j-1}}{2\\Delta y}')} + \\mathcal{O}(\\Delta x^2, \\Delta y^2)`, annotation: 'Zentrale Differenz in x und y: 2. Ordnung in beiden Richtungen.' },
+      '3D': { formula: `\\frac{\\partial\\phi}{\\partial x_k}\\bigg|_{\\vec{i}} \\approx ${tc(C.rose, '\\frac{\\phi_{\\vec{i}+e_k} - \\phi_{\\vec{i}-e_k}}{2\\Delta x_k}')} + \\mathcal{O}(\\Delta x_k^2),\\; k = 1,2,3`, annotation: 'Zentrale Differenz in jeder Raumrichtung — 2. Ordnung.' },
+      'allg': { formula: `${tc(C.rose, '\\nabla_h^{c}\\phi')} = \\text{Zentrale Differenz},\\quad \\mathcal{O}(\\Delta x^2)`, annotation: 'Kompakte Notation: ∇_h^c = zentraler diskreter Gradient. 2. Ordnung.' },
+    },
   },
   forward: {
     label: 'Vorwärts-Differenz',
@@ -312,6 +374,11 @@ const FDM_SCHEMA: Record<FDMScheme, Stage> = {
     formula: `\\frac{\\partial\\phi}{\\partial x}\\bigg|_i \\approx ${tc(C.rose, '\\frac{\\phi_{i+1} - \\phi_i}{\\Delta x}')} + \\mathcal{O}(\\Delta x)`,
     annotation: '1. Ordnung — Downwind bei u > 0, oft instabil für Konvektion.',
     color: C.rose,
+    byDim: {
+      '2D': { formula: `\\frac{\\partial\\phi}{\\partial x}\\bigg|_{i,j} \\approx ${tc(C.rose, '\\frac{\\phi_{i+1,j} - \\phi_{i,j}}{\\Delta x}')},\\; \\frac{\\partial\\phi}{\\partial y}\\bigg|_{i,j} \\approx ${tc(C.rose, '\\frac{\\phi_{i,j+1} - \\phi_{i,j}}{\\Delta y}')} + \\mathcal{O}(\\Delta x, \\Delta y)`, annotation: 'Vorwärts-Differenz in x und y: 1. Ordnung.' },
+      '3D': { formula: `\\frac{\\partial\\phi}{\\partial x_k}\\bigg|_{\\vec{i}} \\approx ${tc(C.rose, '\\frac{\\phi_{\\vec{i}+e_k} - \\phi_{\\vec{i}}}{\\Delta x_k}')} + \\mathcal{O}(\\Delta x_k),\\; k = 1,2,3`, annotation: 'Vorwärts-Differenz in jeder Raumrichtung — 1. Ordnung, Downwind.' },
+      'allg': { formula: `${tc(C.rose, '\\nabla_h^{+}\\phi')} = \\text{Vorwärts-Differenz},\\quad \\mathcal{O}(\\Delta x)`, annotation: 'Kompakte Notation: ∇_h^+ = diskreter Vorwärts-Gradient. 1. Ordnung, Downwind.' },
+    },
   },
 };
 
@@ -327,6 +394,11 @@ const FVM_TIME: Record<TimeKey, Stage> = {
     formula: `\\rho_P V_P ${tc(C.emerald, '\\frac{\\phi_P^{n+1} - \\phi_P^{\\,n}}{\\Delta t}')} + \\sum_f \\dot{m}_f\\,\\phi_f${tc(C.emerald, '^{\\,n}')} = \\sum_f \\Gamma_f A_f\\,(\\nabla\\phi\\!\\cdot\\!\\vec{n})_f${tc(C.emerald, '^{\\,n}')} + S_{\\phi,P}V_P`,
     annotation: 'Räumliche Terme zum bekannten Zeitschritt n. CFL: Δt ≤ Δx/u.',
     color: C.emerald,
+    byDim: {
+      '1D': { formula: `\\rho_P \\Delta x ${tc(C.emerald, '\\frac{\\phi_P^{n+1} - \\phi_P^{\\,n}}{\\Delta t}')} + \\dot{m}_e\\,\\phi_e${tc(C.emerald, '^{\\,n}')} - \\dot{m}_w\\,\\phi_w${tc(C.emerald, '^{\\,n}')} = \\Gamma_e\\frac{\\phi_E^n - \\phi_P^n}{\\delta x} - \\Gamma_w\\frac{\\phi_P^n - \\phi_W^n}{\\delta x} + S_{\\phi,P}\\Delta x`, annotation: '1D: 2 Faces (e, w). CFL: Δt ≤ Δx/u.' },
+      '2D': { annotation: '2D: Σ_f über 4 Faces (e, w, n, s). CFL: Δt ≤ min(Δx/u, Δy/v).' },
+      '3D': { annotation: '3D: Σ_f über 6 Faces. CFL: Δt ≤ min(Δx_k/u_k).' },
+    },
     derivation: [
       { title: 'Zeitableitung → Vorwärts-Differenz',
         tex: '\\frac{\\partial \\phi}{\\partial t} \\approx \\frac{\\phi^{n+1} - \\phi^n}{\\Delta t} + \\mathcal{O}(\\Delta t)',
@@ -345,6 +417,11 @@ const FVM_TIME: Record<TimeKey, Stage> = {
     formula: `\\rho_P V_P ${tc(C.emerald, '\\frac{\\phi_P^{n+1} - \\phi_P^{\\,n}}{\\Delta t}')} + \\sum_f \\dot{m}_f\\,\\phi_f${tc(C.emerald, '^{n+1}')} = \\sum_f \\Gamma_f A_f\\,(\\nabla\\phi\\!\\cdot\\!\\vec{n})_f${tc(C.emerald, '^{n+1}')} + S_{\\phi,P}V_P`,
     annotation: 'Räumliche Terme zum unbekannten n+1 → immer stabil, braucht aber LGS.',
     color: C.emerald,
+    byDim: {
+      '1D': { formula: `\\rho_P \\Delta x ${tc(C.emerald, '\\frac{\\phi_P^{n+1} - \\phi_P^{\\,n}}{\\Delta t}')} + \\dot{m}_e\\,\\phi_e${tc(C.emerald, '^{n+1}')} - \\dot{m}_w\\,\\phi_w${tc(C.emerald, '^{n+1}')} = \\Gamma_e\\frac{\\phi_E^{n+1} - \\phi_P^{n+1}}{\\delta x} - \\Gamma_w\\frac{\\phi_P^{n+1} - \\phi_W^{n+1}}{\\delta x} + S_{\\phi,P}\\Delta x`, annotation: '1D: 2 Faces. Alle räumlichen Terme bei n+1 → tridiagonales LGS.' },
+      '2D': { annotation: '2D: 4 Faces bei n+1 → pentadiagonales LGS. Immer stabil.' },
+      '3D': { annotation: '3D: 6 Faces bei n+1 → 7-Band-LGS. Immer stabil.' },
+    },
     derivation: [
       { title: 'Implizite Zeitdiskretisierung',
         tex: '\\frac{\\phi^{n+1} - \\phi^n}{\\Delta t} = F(\\phi^{n+1})',
@@ -363,6 +440,11 @@ const FVM_TIME: Record<TimeKey, Stage> = {
     formula: `\\frac{\\rho_P V_P(\\phi_P^{n+1} - \\phi_P^{\\,n})}{\\Delta t} + ${tc(C.emerald, '\\tfrac{1}{2}\\Big(R(\\phi^{n+1}) + R(\\phi^{\\,n})\\Big)')} = 0`,
     annotation: 'R = Σ ṁ_f φ_f − Σ Γ_f A_f (∇φ·n⃗)_f − S_φ V_P. Mittelwert → 2. Ordnung in t.',
     color: C.emerald,
+    byDim: {
+      '1D': { annotation: '1D: R hat nur 2 Face-Terme. Mittelwert aus n und n+1.' },
+      '2D': { annotation: '2D: R mit 4 Faces (e,w,n,s). Trapezregel → 2. Ordnung.' },
+      '3D': { annotation: '3D: R mit 6 Faces. 2. Ordnung in t, aber nicht L-stabil.' },
+    },
     derivation: [
       { title: 'Trapezregel in der Zeit',
         tex: '\\int_{t^n}^{t^{n+1}} F(\\phi)\\,dt \\approx \\frac{\\Delta t}{2}\\bigl[F(\\phi^n) + F(\\phi^{n+1})\\bigr]',
@@ -384,6 +466,11 @@ const FDM_TIME: Record<TimeKey, Stage> = {
     formula: `${tc(C.emerald, '\\frac{\\phi_i^{n+1} - \\phi_i^{\\,n}}{\\Delta t}')} = L\\!\\left(\\phi${tc(C.emerald, '^{\\,n}')}\\right)`,
     annotation: 'L(φ) = −u·(D_x φ)_i + Γ·(D_xx φ)_i mit gewähltem Stencil. CFL beachten!',
     color: C.emerald,
+    byDim: {
+      '2D': { annotation: 'L(φ) = −u·D_x φ − v·D_y φ + Γ·(D_xx + D_yy)φ. 2D-CFL beachten!' },
+      '3D': { annotation: 'L(φ) = −Σ u_k D_k φ + Γ·Σ D_kk φ. 3D-CFL: Δt ≤ min(Δx_k/u_k).' },
+      'allg': { annotation: 'L(φ) = −u⃗·∇_h φ + Γ∇²_h φ. CFL in jeder Richtung prüfen!' },
+    },
   },
   'euler-imp': {
     label: 'Euler implizit',
@@ -391,6 +478,11 @@ const FDM_TIME: Record<TimeKey, Stage> = {
     formula: `${tc(C.emerald, '\\frac{\\phi_i^{n+1} - \\phi_i^{\\,n}}{\\Delta t}')} = L\\!\\left(\\phi${tc(C.emerald, '^{n+1}')}\\right)`,
     annotation: 'Räumlicher Operator zum unbekannten n+1 → unbedingt stabil, LGS nötig.',
     color: C.emerald,
+    byDim: {
+      '2D': { formula: `${tc(C.emerald, '\\frac{\\phi_{i,j}^{n+1} - \\phi_{i,j}^{\\,n}}{\\Delta t}')} = L\\!\\left(\\phi${tc(C.emerald, '^{n+1}')}\\right)`, annotation: 'L(φ^{n+1}) in 2D → 5-Punkt-LGS pro Zeitschritt. Unbedingt stabil.' },
+      '3D': { formula: `${tc(C.emerald, '\\frac{\\phi_{\\vec{i}}^{n+1} - \\phi_{\\vec{i}}^{\\,n}}{\\Delta t}')} = L\\!\\left(\\phi${tc(C.emerald, '^{n+1}')}\\right)`, annotation: 'L(φ^{n+1}) in 3D → 7-Punkt-LGS pro Zeitschritt. Unbedingt stabil.' },
+      'allg': { annotation: 'L(φ^{n+1}) → LGS. Unbedingt stabil für jede Dimension.' },
+    },
   },
   'crank-nic': {
     label: 'Crank-Nicolson',
@@ -398,6 +490,11 @@ const FDM_TIME: Record<TimeKey, Stage> = {
     formula: `\\frac{\\phi_i^{n+1} - \\phi_i^{\\,n}}{\\Delta t} = ${tc(C.emerald, '\\tfrac{1}{2}\\bigl[L(\\phi^{\\,n}) + L(\\phi^{n+1})\\bigr]')}`,
     annotation: 'L = räumlicher Operator (Stencil bereits gewählt). Mittelwert → 2. Ordnung in t.',
     color: C.emerald,
+    byDim: {
+      '2D': { formula: `\\frac{\\phi_{i,j}^{n+1} - \\phi_{i,j}^{\\,n}}{\\Delta t} = ${tc(C.emerald, '\\tfrac{1}{2}\\bigl[L(\\phi^{\\,n}) + L(\\phi^{n+1})\\bigr]')}`, annotation: 'L = 2D-Operator. Trapezregel → 2. Ordnung in t.' },
+      '3D': { formula: `\\frac{\\phi_{\\vec{i}}^{n+1} - \\phi_{\\vec{i}}^{\\,n}}{\\Delta t} = ${tc(C.emerald, '\\tfrac{1}{2}\\bigl[L(\\phi^{\\,n}) + L(\\phi^{n+1})\\bigr]')}`, annotation: 'L = 3D-Operator. Crank-Nicolson in jeder Raumrichtung.' },
+      'allg': { annotation: 'L = allgemeiner räumlicher Operator. Trapezregel → 2. Ordnung in t, A-stabil.' },
+    },
   },
 };
 
@@ -412,6 +509,11 @@ const FVM_LATE_EXP: Stage[] = [
     formula: `${tc(C.sky, '\\phi_P^{n+1}')} = \\phi_P^n + \\frac{\\Delta t}{\\rho_P V_P}\\!\\left[\\sum_f \\Gamma_f A_f \\frac{\\phi_E^n - \\phi_P^n}{d_{PE}} - \\sum_f \\dot{m}_f\\,\\phi_f^n + S_{\\phi,P}V_P\\right]`,
     annotation: 'Direkt berechenbar — kein Gleichungssystem nötig.',
     color: C.sky,
+    byDim: {
+      '1D': { formula: `${tc(C.sky, '\\phi_P^{n+1}')} = \\phi_P^n + \\frac{\\Delta t}{\\rho_P \\Delta x}\\!\\left[\\Gamma_e\\frac{\\phi_E^n - \\phi_P^n}{\\delta x} - \\Gamma_w\\frac{\\phi_P^n - \\phi_W^n}{\\delta x} - \\dot{m}_e\\phi_e^n + \\dot{m}_w\\phi_w^n + S_{\\phi,P}\\Delta x\\right]`, annotation: '1D: 2 Faces (e, w). Direkt berechenbar.' },
+      '2D': { formula: `${tc(C.sky, '\\phi_P^{n+1}')} = \\phi_P^n + \\frac{\\Delta t}{\\rho_P V_P}\\!\\left[\\sum_{f \\in \\{e,w,n,s\\}} \\Gamma_f A_f \\frac{\\phi_\\text{nb}^n - \\phi_P^n}{d} - \\sum_{f \\in \\{e,w,n,s\\}} \\dot{m}_f\\,\\phi_f^n + S_{\\phi,P}V_P\\right]`, annotation: '2D: 4 Faces (e, w, n, s). Direkt berechenbar.' },
+      '3D': { formula: `${tc(C.sky, '\\phi_P^{n+1}')} = \\phi_P^n + \\frac{\\Delta t}{\\rho_P V_P}\\!\\left[\\sum_{f \\in \\{e,w,n,s,t,b\\}} \\Gamma_f A_f \\frac{\\phi_\\text{nb}^n - \\phi_P^n}{d} - \\sum_{f} \\dot{m}_f\\,\\phi_f^n + S_{\\phi,P}V_P\\right]`, annotation: '3D: 6 Faces. Direkt berechenbar.' },
+    },
   },
   {
     label: 'Matrix-Vektor-Produkt',
@@ -429,6 +531,11 @@ const FVM_LATE_IMP: Stage[] = [
     formula: `${tc(C.sky, 'a_P')}\\,\\phi_P^{n+1} = ${tc(C.sky, 'a_W')}\\,\\phi_W^{n+1} + ${tc(C.sky, 'a_E')}\\,\\phi_E^{n+1} + ${tc(C.sky, 'b_P')}`,
     annotation: 'Unbekannte auf beiden Seiten → gekoppeltes LGS. b_P enthält Quelle + Zeitterm.',
     color: C.sky,
+    byDim: {
+      '2D': { formula: `${tc(C.sky, 'a_P')}\\,\\phi_P^{n+1} = ${tc(C.sky, 'a_W')}\\,\\phi_W^{n+1} + ${tc(C.sky, 'a_E')}\\,\\phi_E^{n+1} + ${tc(C.sky, 'a_S')}\\,\\phi_S^{n+1} + ${tc(C.sky, 'a_N')}\\,\\phi_N^{n+1} + ${tc(C.sky, 'b_P')}`, annotation: '5-Punkt-Stern: P, W, E, S, N. Pentadiagonales LGS.' },
+      '3D': { formula: `${tc(C.sky, 'a_P')}\\,\\phi_P^{n+1} = ${tc(C.sky, '\\sum_{\\text{nb}}')} a_{\\text{nb}}\\,\\phi_{\\text{nb}}^{n+1} + ${tc(C.sky, 'b_P')},\\quad \\text{nb} \\in \\{W,E,S,N,B,T\\}`, annotation: '7-Punkt-Stern: P, W, E, S, N, B, T.' },
+      'allg': { formula: `${tc(C.sky, 'a_P')}\\,\\phi_P^{n+1} = ${tc(C.sky, '\\sum_{\\text{nb}}')} a_{\\text{nb}}\\,\\phi_{\\text{nb}}^{n+1} + ${tc(C.sky, 'b_P')}`, annotation: 'Summe über alle Nachbarzellen nb. Dünnbesetzte Matrix.' },
+    },
   },
   {
     label: 'Gleichungssystem lösen',
@@ -436,6 +543,11 @@ const FVM_LATE_IMP: Stage[] = [
     formula: `${tc(C.orange, '\\mathbf{A}')}\\vec{\\phi}^{n+1} \\!= \\vec{b} \\;\\Rightarrow\\; ${tc(C.orange, '\\begin{bmatrix} a_P & a_E & 0 \\\\ a_W & a_P & a_E \\\\ 0 & a_W & a_P \\end{bmatrix}')} \\begin{bmatrix} \\phi_1 \\\\ \\phi_2 \\\\ \\phi_3 \\end{bmatrix}^{\\!n+1} \\!\\!= \\begin{bmatrix} b_1 \\\\ b_2 \\\\ b_3 \\end{bmatrix}`,
     annotation: 'Tridiagonale Matrix → TDMA / iterativer Löser.',
     color: C.orange,
+    byDim: {
+      '2D': { annotation: 'Pentadiagonale Matrix (Bandbreite N) → iterativer Löser (Gauß-Seidel, SOR).' },
+      '3D': { annotation: '7-Band-Matrix → GMRES, BiCGStab oder Multigrid.' },
+      'allg': { annotation: 'Dünnbesetzte Matrix A — iterativer Löser nötig.' },
+    },
   },
 ];
 
@@ -446,6 +558,11 @@ const FDM_LATE_EXP: Stage[] = [
     formula: `${tc(C.sky, '\\phi_i^{n+1}')} = ${tc(C.sky, 'c_W')}\\,\\phi_{i-1}^n + ${tc(C.sky, 'c_P')}\\,\\phi_i^n + ${tc(C.sky, 'c_E')}\\,\\phi_{i+1}^n`,
     annotation: 'Direkt berechenbar: gewichteter Durchschnitt der Nachbarn.',
     color: C.sky,
+    byDim: {
+      '2D': { formula: `${tc(C.sky, '\\phi_{i,j}^{n+1}')} = ${tc(C.sky, 'c_W')}\\,\\phi_{i-1,j}^n + ${tc(C.sky, 'c_E')}\\,\\phi_{i+1,j}^n + ${tc(C.sky, 'c_S')}\\,\\phi_{i,j-1}^n + ${tc(C.sky, 'c_N')}\\,\\phi_{i,j+1}^n + ${tc(C.sky, 'c_P')}\\,\\phi_{i,j}^n`, annotation: '5-Punkt-Update: (i±1,j) und (i,j±1).' },
+      '3D': { formula: `${tc(C.sky, '\\phi_{\\vec{i}}^{n+1}')} = ${tc(C.sky, '\\sum_{\\text{nb}}')} c_{\\text{nb}}\\,\\phi_{\\text{nb}}^n + ${tc(C.sky, 'c_P')}\\,\\phi_{\\vec{i}}^n`, annotation: '7-Punkt-Update: Nachbarn in jeder Richtung.' },
+      'allg': { annotation: 'Gewichteter Durchschnitt aller Gitter-Nachbarn.' },
+    },
   },
   {
     label: 'Matrix-Vektor-Produkt',
@@ -453,6 +570,11 @@ const FDM_LATE_EXP: Stage[] = [
     formula: `${tc(C.orange, '\\vec{\\phi}^{\\,n+1}')} = ${tc(C.orange, '\\mathbf{C}')}\\,\\vec{\\phi}^{\\,n} \\;\\Rightarrow\\; ${tc(C.orange, '\\begin{bmatrix} \\phi_1 \\\\ \\phi_2 \\\\ \\phi_3 \\end{bmatrix}^{\\!n+1}')} \\!= ${tc(C.orange, '\\begin{bmatrix} c_P & c_E & 0 \\\\ c_W & c_P & c_E \\\\ 0 & c_W & c_P \\end{bmatrix}')} \\begin{bmatrix} \\phi_1 \\\\ \\phi_2 \\\\ \\phi_3 \\end{bmatrix}^{\\!n}`,
     annotation: 'Nur Multiplikation — schnell, aber CFL-Bedingung!',
     color: C.orange,
+    byDim: {
+      '2D': { annotation: 'C ist dünnbesetzt (5-Band). Schnell, aber 2D-CFL beachten!' },
+      '3D': { annotation: 'C ist dünnbesetzt (7-Band). 3D-CFL: Σ u_k Δt/Δx_k ≤ 1.' },
+      'allg': { annotation: 'Matrix-Vektor-Produkt — CFL in jeder Richtung!' },
+    },
   },
 ];
 
@@ -463,6 +585,11 @@ const FDM_LATE_IMP: Stage[] = [
     formula: `${tc(C.sky, 'a_P')}\\,\\phi_i^{n+1} = ${tc(C.sky, 'a_W')}\\,\\phi_{i-1}^{n+1} + ${tc(C.sky, 'a_E')}\\,\\phi_{i+1}^{n+1} + ${tc(C.sky, 'b_i')}`,
     annotation: 'Unbekannte auf beiden Seiten → LGS nötig.',
     color: C.sky,
+    byDim: {
+      '2D': { formula: `${tc(C.sky, 'a_P')}\\,\\phi_{i,j}^{n+1} = ${tc(C.sky, 'a_W')}\\,\\phi_{i-1,j}^{n+1} + ${tc(C.sky, 'a_E')}\\,\\phi_{i+1,j}^{n+1} + ${tc(C.sky, 'a_S')}\\,\\phi_{i,j-1}^{n+1} + ${tc(C.sky, 'a_N')}\\,\\phi_{i,j+1}^{n+1} + ${tc(C.sky, 'b_{i,j}')}`, annotation: '5-Punkt-Stern: i±1, j±1. Pentadiagonales LGS.' },
+      '3D': { formula: `${tc(C.sky, 'a_P')}\\,\\phi_{\\vec{i}}^{n+1} = ${tc(C.sky, '\\sum_{\\text{nb}}')} a_{\\text{nb}}\\,\\phi_{\\text{nb}}^{n+1} + ${tc(C.sky, 'b_{\\vec{i}}')}`, annotation: '7-Punkt-Stern. Dünnbesetztes LGS.' },
+      'allg': { annotation: 'Summe über alle Gitter-Nachbarn. Dünnbesetzte Matrix.' },
+    },
   },
   {
     label: 'Gleichungssystem lösen',
@@ -470,6 +597,11 @@ const FDM_LATE_IMP: Stage[] = [
     formula: `${tc(C.orange, '\\mathbf{A}')}\\vec{\\phi}^{n+1} \\!= \\vec{b} \\;\\Rightarrow\\; ${tc(C.orange, '\\begin{bmatrix} a_P & a_E & 0 \\\\ a_W & a_P & a_E \\\\ 0 & a_W & a_P \\end{bmatrix}')} \\begin{bmatrix} \\phi_1 \\\\ \\phi_2 \\\\ \\phi_3 \\end{bmatrix}^{\\!n+1} \\!\\!= \\begin{bmatrix} b_1 \\\\ b_2 \\\\ b_3 \\end{bmatrix}`,
     annotation: 'Tridiagonal → effizient lösbar mit TDMA.',
     color: C.orange,
+    byDim: {
+      '2D': { annotation: 'Pentadiagonale Matrix — iterativer Löser (Gauß-Seidel, SOR, ADI).' },
+      '3D': { annotation: '7-Band-Matrix → GMRES, BiCGStab oder Multigrid.' },
+      'allg': { annotation: 'Dünnbesetzte Matrix A — Bandstruktur hängt von Gitter-Topologie ab.' },
+    },
   },
 ];
 
@@ -541,7 +673,7 @@ const ANIM_STYLES = `
   animation: fjFormulaIn 0.25s ease-out both;
 }
 .fj-step-flash {
-  animation: fjStepFlash 0.5s ease-out both;
+  animation: fjStepFlash 1.2s ease-out both;
 }
 `;
 
@@ -604,6 +736,7 @@ export default function FormulaJourney({ scrollProgress }: { scrollProgress: num
   const [time, setTime] = useState<TimeKey>('euler-exp');
   const [fvmScheme, setFvmScheme] = useState<FVMScheme>('UDS');
   const [fdmScheme, setFdmScheme] = useState<FDMScheme>('backward');
+  const [dim, setDim] = useState<DimKey>('allg');
 
   const stages = useMemo(
     () => buildStages(method, time, fvmScheme, fdmScheme),
@@ -617,7 +750,7 @@ export default function FormulaJourney({ scrollProgress }: { scrollProgress: num
   const stage = stages[activeIndex];
 
   /* Animation key — changes on every stage/option switch */
-  const animKey = `${method}-${time}-${fvmScheme}-${fdmScheme}-${activeIndex}`;
+  const animKey = `${method}-${time}-${fvmScheme}-${fdmScheme}-${dim}-${activeIndex}`;
 
   /* Brief step-label flash during transitions */
   const [stepFlash, setStepFlash] = useState<string | null>(null);
@@ -625,7 +758,7 @@ export default function FormulaJourney({ scrollProgress }: { scrollProgress: num
   useEffect(() => {
     if (animKey !== prevAnimKey.current) {
       setStepFlash(stage.stepLabel);
-      const t = setTimeout(() => setStepFlash(null), 500);
+      const t = setTimeout(() => setStepFlash(null), 1200);
       prevAnimKey.current = animKey;
       return () => clearTimeout(t);
     }
@@ -637,10 +770,12 @@ export default function FormulaJourney({ scrollProgress }: { scrollProgress: num
   useEffect(() => { setShowDeriv(false); }, [activeIndex]);
 
   const shown = stage;
+  const shownFormula = shown.byDim?.[dim]?.formula ?? shown.formula;
+  const shownAnnotation = shown.byDim?.[dim]?.annotation ?? shown.annotation;
 
   /* Which sub-toggles to show — only when they change the current formula */
-  const schemeStart = method === 'FVM' ? 4 : 2;
-  const schemeEnd   = method === 'FVM' ? 5 : 4;   // hide at time-integration & later
+  const schemeStart = method === 'FVM' ? 4 : 3;
+  const schemeEnd   = 5;   // hide at time-integration & later
   const showScheme  = activeIndex >= schemeStart && activeIndex < schemeEnd;
   const showTime    = activeIndex >= (method === 'FVM' ? 5 : 4);
   const schemeOpts = method === 'FVM' ? FVM_SCHEME_OPTS : FDM_SCHEME_OPTS;
@@ -653,6 +788,30 @@ export default function FormulaJourney({ scrollProgress }: { scrollProgress: num
   return (
     <div className="h-full relative select-none">
       <AnimStyles />
+
+      {/* ── Dimension toggle — top (hidden when stage has no dim variants) ── */}
+      <div
+        className={`absolute inset-x-0 flex justify-center pointer-events-auto transition-all duration-300 ${
+          shown.byDim ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+        style={{ top: '8%' }}
+      >
+        <div className="flex gap-0.5 bg-gray-900/80 rounded-md p-0.5">
+          {(['1D', '2D', '3D', 'allg'] as DimKey[]).map((d) => (
+            <button
+              key={d}
+              onClick={() => setDim(d)}
+              className={`px-2 py-0.5 rounded text-[10px] font-medium transition-all duration-200 ${
+                dim === d
+                  ? 'bg-gray-700 text-gray-200 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-400'
+              }`}
+            >
+              {d === 'allg' ? 'Allg.' : d}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* ── Step indicator dots — fixed at top ────────────── */}
       <div className="absolute inset-x-0 flex justify-center" style={{ top: '15%' }}>
@@ -698,21 +857,21 @@ export default function FormulaJourney({ scrollProgress }: { scrollProgress: num
       )}
 
       {/* ── The morphing formula — fixed center ──────────── */}
-      <div className="absolute inset-x-0 flex flex-col items-center" style={{ top: '40%', transform: 'translateY(-50%)' }}>
-        <div className="w-full">
-          <div className="flex justify-center overflow-hidden" style={{ fontSize: '1.1em' }}>
-            <KaTeXBlock tex={shown.formula} animKey={animKey} />
+      <div className="absolute inset-x-0 flex flex-col items-center px-3" style={{ top: '38%', transform: 'translateY(-50%)' }}>
+        <div className="w-full overflow-x-auto overflow-y-hidden" style={{ scrollbarWidth: 'none' }}>
+          <div className="flex justify-center" style={{ fontSize: '1.1em' }}>
+            <KaTeXBlock tex={shownFormula} animKey={animKey} />
           </div>
         </div>
       </div>
 
       {/* ── Annotation — fixed below formula ─────────────── */}
-      <div className="absolute inset-x-0 flex flex-col items-center" style={{ top: '54%' }}>
+      <div className="absolute inset-x-0 flex flex-col items-center px-4" style={{ top: '53%' }}>
         <div
-          className="text-[11px] text-gray-600 text-center max-w-[320px] leading-relaxed fj-formula-enter"
+          className="text-[13px] text-gray-500 text-center max-w-[85%] leading-relaxed fj-formula-enter"
           key={`ann-${animKey}`}
         >
-          {shown.annotation}
+          {shownAnnotation}
         </div>
         {/* Herleitung button */}
         {shown.derivation && (
@@ -731,11 +890,15 @@ export default function FormulaJourney({ scrollProgress }: { scrollProgress: num
           </button>
         )}
 
+      </div>
+
+      {/* ── Scroll / complete hint — centered on full page ── */}
+      <div className="fixed left-1/2 -translate-x-1/2 z-20 pointer-events-none" style={{ top: '55vh' }}>
         {activeIndex < TOTAL - 1 ? (
-          <div className="mt-1 text-[9px] text-gray-700 opacity-50">↓ scrollen</div>
+          <div className="text-[13px] text-gray-600 opacity-70 animate-pulse">↓ scrollen</div>
         ) : (
-          <div className="mt-1 flex items-center gap-1 text-[10px] text-orange-400/70">
-            <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
+          <div className="flex items-center gap-1.5 text-[13px] text-orange-400/80">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
               <path d="M3 8.5l3 3 7-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             Diskretisierung komplett
